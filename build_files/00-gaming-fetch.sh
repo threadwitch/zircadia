@@ -2,6 +2,8 @@
 
 set -xeuo pipefail
 
+dnf install -y dnf5-plugins
+
 dnf config-manager setopt keepcache=1
 trap 'dnf config-manager setopt keepcache=0' EXIT
 
