@@ -16,10 +16,31 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=tmpfs,dst=/run \
     --mount=type=tmpfs,dst=/boot \
     --mount=type=cache,dst=/var/cache/libdnf5 \
-    /ctx/build/00-gaming-fetch.sh \
-    && /ctx/build/10-1p-install.sh \
-    && /ctx/build/20-trivalent-install.sh \
-    && /ctx/build/30-util-install.sh
+    /ctx/build/00-gaming-fetch.sh 
+
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=tmpfs,dst=/var \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    --mount=type=tmpfs,dst=/boot \
+    --mount=type=cache,dst=/var/cache/libdnf5 \
+    /ctx/build/10-1p-install.sh 
+
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=tmpfs,dst=/var \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    --mount=type=tmpfs,dst=/boot \
+    --mount=type=cache,dst=/var/cache/libdnf5 \
+    /ctx/build/20-trivalent-install.sh 
+
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=tmpfs,dst=/var \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    --mount=type=tmpfs,dst=/boot \
+    --mount=type=cache,dst=/var/cache/libdnf5 \
+    /ctx/build/30-util-install.sh
     
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=tmpfs,dst=/var \
