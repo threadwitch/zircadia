@@ -30,6 +30,11 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     /ctx/build/01-gaming-post.sh
 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=tmpfs,dst=/boot \
+    --network=none \
+    /ctx/build/50-nvidia.sh
+
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=tmpfs,dst=/run \
     --mount=type=tmpfs,dst=/boot \
     --network=none \
