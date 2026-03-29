@@ -4,9 +4,6 @@ set -xeuo pipefail
 
 trap 'dnf config-manager setopt keepcache=0' EXIT
 
-dnf -y --enablerepo copr:copr.fedorainfracloud.org:lizardbyte:beta install \
-  Sunshine
-
 dnf5 -y remove \
     pipewire-config-raop \
     mesa-va-drivers
@@ -53,50 +50,8 @@ dnf versionlock add \
 
 dnf -y install libfreeaptx
 
-dnf5 -y install --enable-repo="*rpmfusion*" --disable-repo="*fedora-multimedia*" \
+dnf5 -y install --enable-repo="*rpmfusion*" \
   libaacs \
   libbdplus \
   libbluray \
   libbluray-utils
-
-dnf -y --enablerepo=terra --enablerepo=terra-extras install \
-  terra-gamescope
-
-dnf -y --enablerepo=terra install --skip-unavailable \
-  asusctl \
-  gamescope-session-ogui-steam \
-  gamescope-session-opengamepadui \
-  gamescope-session-plus \
-  gamescope-session-steam \
-  inputplumber \
-  opengamepadui \
-  powerbuttond \
-  powerstation \
-  ScopeBuddy \
-  scx-scheds \
-  scx-tools \
-  steam-notif-daemon \
-  steamos-manager \
-  steamos-manager-gamescope-session-plus \
-  umu-launcher
-
-if [[ "${BUILD_FLAVOR}" =~ "nvidia" ]] ; then
-  dnf -y --enablerepo=terra --enablerepo=terra-nvidia --enablerepo=terra-mesa install \
-    -x falcond \
-    steam
-else
-  dnf -y --enablerepo=terra --enablerepo=terra-mesa install \
-    -x falcond \
-    steam
-fi
-
-
-rm /usr/share/wayland-sessions/gamescope-session-steam.desktop # we dont want the standard session
-
-mkdir -p /usr/share/sdl/
-curl "https://raw.githubusercontent.com/mdqinc/SDL_GameControllerDB/refs/heads/master/gamecontrollerdb.txt" -Lo /usr/share/sdl/gamecontrollerdb.txt
-
-dnf install -y mangohud vulkan-tools waydroid
-
-dnf info mesa-filesystem | grep -F -e "Terra"
-rpm -qa | grep -v -E "^gamescope" &> /dev/null
