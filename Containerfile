@@ -15,14 +15,14 @@ RUN --mount=type=cache,dst=/var/cache \
     --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=tmpfs,dst=/tmp \
     /ctx/build/00-source-fetch.sh && \
-    /ctx/cleanup
+    /ctx/build/cleanup
 
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=tmpfs,dst=/tmp \
     /ctx/build/01-driver-install.sh && \
-    /ctx/cleanup
+    /ctx/build/cleanup
 
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
@@ -30,7 +30,7 @@ RUN --mount=type=cache,dst=/var/cache \
     --mount=type=tmpfs,dst=/tmp \
     --mount=type=secret,id=GITHUB_TOKEN \
     /ctx/build/02-gaming-install.sh && \
-    /ctx/cleanup
+    /ctx/build/cleanup
 
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
@@ -41,7 +41,7 @@ RUN --mount=type=cache,dst=/var/cache \
     /ctx/build/04-trivalent-install.sh && \
     /ctx/build/05-util-install.sh && \
     /ctx/build/09-gaming-post.sh && \
-    //ctx/cleanup
+    /ctx/build/cleanup
 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=tmpfs,dst=/boot \
