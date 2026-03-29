@@ -12,13 +12,15 @@ dnf copr disable -y lizardbyte/beta
 dnf -y --enablerepo copr:copr.fedorainfracloud.org:lizardbyte:beta install \
   Sunshine
 
+dnf -y --enablerepo=terra --enablerepo=terra-extras install terra-release-mesa
+dnf config-manager setopt terra-mesa.enabled=0
+
 dnf -y --enablerepo=terra --enablerepo=terra-extras install \
   terra-gamescope
 
-dnf swap --repo=terra-mesa -y mesa-filesystem mesa-filesystem
-dnf -y --enablerepo=terra install \
+dnf -y --enablerepo=terra --enablerepo=terra-mesa swap --from-repo=terra-mesa -y mesa-filesystem mesa-filesystem
+dnf -y --enablerepo=terra install --skip-unavailable \
   asusctl \
-  dkms-xone \
   gamescope-session-ogui-steam \
   gamescope-session-opengamepadui \
   gamescope-session-plus \
