@@ -2,6 +2,8 @@
 
 set -ouex pipefail
 
+trap 'dnf config-manager setopt keepcache=0' EXIT
+
 #### Variables
 
 # Can be "beta" or "stable"
