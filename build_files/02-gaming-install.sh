@@ -12,11 +12,13 @@ dnf -y install \
     waydroid
 sed -i~ -E 's/=.\$\(command -v (nft|ip6?tables-legacy).*/=/g' /usr/lib/waydroid/data/scripts/waydroid-net.sh
 
-dnf -y --enablerepo=terra --enablerepo=terra-extras install \
-  terra-gamescope
+# dnf -y --enablerepo=terra --enablerepo=terra-extras install \
+#   terra-gamescope
 
-dnf -y --enablerepo=terra-mesa install --skip-unavailable \
-    jupiter-sd-mounting-btrfs \
+dnf -y --enablerepo=terra-mesa install \
+    gamescope.x86_64 \
+    gamescope-libs.x86_64 \
+    gamescope-shaders \
     dbus-x11 \
     xrandr \
     evtest \
@@ -46,10 +48,6 @@ dnf -y --enablerepo=terra-mesa install --skip-unavailable \
     libobs_vkcapture.i686 \
     libobs_glcapture.i686 \
     umu-launcher
-
-    # gamescope.x86_64 \
-    # gamescope-libs.x86_64 \
-    # gamescope-shaders \
 
 if [[ "${BUILD_FLAVOR}" =~ "nvidia" ]] ; then
   dnf -y --enablerepo=terra --enablerepo=terra-nvidia --enablerepo=terra-mesa --setopt=install_weak_deps=False install \
