@@ -20,10 +20,7 @@ dnf -y --enablerepo=terra-mesa install \
     gamescope-libs.x86_64 \
     gamescope-shaders \
     dbus-x11 \
-    xrandr \
     evtest \
-    xdg-user-dirs \
-    xdg-terminal-exec \
     asusctl \
     inputplumber \
     opengamepadui \
@@ -34,19 +31,18 @@ dnf -y --enablerepo=terra-mesa install \
     steam-notif-daemon \
     steamos-manager \
     steamos-manager-gamescope-session-plus \
-    gobject-introspection \
     libFAudio.x86_64 \
     vkBasalt.x86_64 \
     mangohud.x86_64 \
-    libobs_vkcapture.x86_64 \
-    libobs_glcapture.x86_64 \
+    obs-vkcapture.x86_64 \
+    obs-glcapture.x86_64 \
     openxr \
     gamescope-libs.i686 \
     vkBasalt.i686 \
     libFAudio.i686 \
     mangohud.i686 \
-    libobs_vkcapture.i686 \
-    libobs_glcapture.i686 \
+    obs-vkcapture.i686 \
+    obs-glcapture.i686 \
     umu-launcher
 
 if [[ "${BUILD_FLAVOR}" =~ "nvidia" ]] ; then
