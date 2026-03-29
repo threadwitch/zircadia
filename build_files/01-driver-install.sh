@@ -52,7 +52,4 @@ dnf versionlock add \
 dnf -y install libfreeaptx
 
 dnf5 -y install --enable-repo="*rpmfusion*" \
-  libaacs \
-  libbdplus \
-  libbluray \
-  libbluray-utils
+  libaacs
