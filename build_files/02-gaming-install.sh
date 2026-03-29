@@ -12,17 +12,16 @@ dnf -y install \
     waydroid
 sed -i~ -E 's/=.\$\(command -v (nft|ip6?tables-legacy).*/=/g' /usr/lib/waydroid/data/scripts/waydroid-net.sh
 
-# dnf -y --enablerepo=terra --enablerepo=terra-extras install \
-#   terra-gamescope
+dnf -y --enablerepo=terra --enablerepo=terra-extras install \
+  terra-gamescope
 
 dnf -y --enablerepo=terra-mesa install --skip-unavailable \
-    gamescope.x86_64 \
-    gamescope-libs.x86_64 \
-    gamescope-shaders \
     jupiter-sd-mounting-btrfs \
     dbus-x11 \
     xrandr \
     evtest \
+    xdg-user-dirs \
+    xdg-terminal-exec \
     asusctl \
     inputplumber \
     opengamepadui \
@@ -48,16 +47,18 @@ dnf -y --enablerepo=terra-mesa install --skip-unavailable \
     libobs_glcapture.i686 \
     umu-launcher
 
+    # gamescope.x86_64 \
+    # gamescope-libs.x86_64 \
+    # gamescope-shaders \
+
 if [[ "${BUILD_FLAVOR}" =~ "nvidia" ]] ; then
   dnf -y --enablerepo=terra --enablerepo=terra-nvidia --enablerepo=terra-mesa --setopt=install_weak_deps=False install \
     -x falcond \
-    -x mesa-vulkan-drivers \
     steam \
     lutris
 else
   dnf -y --enablerepo=terra-mesa --setopt=install_weak_deps=False install \
     -x falcond \
-    -x mesa-vulkan-drivers \
     steam \
     lutris
 fi

@@ -10,7 +10,7 @@ dnf5 -y remove \
 
 declare -A toswap=( \
     ["copr:copr.fedorainfracloud.org:ublue-os:bazzite"]="wireplumber" \
-    ["copr:copr.fedorainfracloud.org:ublue-os:bazzite-multilib"]="pipewire bluez NetworkManager" \
+    ["copr:copr.fedorainfracloud.org:ublue-os:bazzite-multilib"]="pipewire bluez xorg-x11-server-Xwayland NetworkManager" \
     ["terra-mesa"]="mesa-filesystem" \
     ["copr:copr.fedorainfracloud.org:ublue-os:staging"]="fwupd" \
 )
@@ -34,6 +34,7 @@ dnf versionlock add \
     bluez-cups \
     bluez-libs \
     bluez-obexd \
+    xorg-x11-server-Xwayland \
     mesa-dri-drivers \
     mesa-filesystem \
     mesa-libEGL \
