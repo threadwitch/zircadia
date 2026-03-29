@@ -15,7 +15,6 @@ for copr in \
     ublue-os/packages \
     ublue-os/obs-vkcapture \
     ycollet/audinux \
-    ublue-os/hhd \
     lizardbyte/beta; \
 do \
     echo "Enabling copr: $copr"; \
@@ -37,7 +36,7 @@ dnf -y config-manager addrepo --from-repofile=https://negativo17.org/repos/fedor
 dnf -y config-manager addrepo --from-repofile=https://negativo17.org/repos/fedora-rar.repo
 
 dnf -y config-manager setopt "*bazzite*".priority=1
-dnf -y config-manager setopt "*terra*".priority=3 "*terra*".exclude="nerd-fonts topgradegit  steam python3-protobuf zlib-devel"
+dnf -y config-manager setopt "*terra*".priority=3 "*terra*".exclude="nerd-fonts topgradegit steam python3-protobuf zlib-devel"
 eval "$(/ctx/dnf5-setopt setopt '*negativo17*' priority=4 exclude='mesa-* *xone*')"
 dnf5 -y config-manager setopt "*rpmfusion*".priority=5 "*rpmfusion*".exclude="mesa-*"
 dnf5 -y config-manager setopt "*fedora*".exclude="mesa-* kernel-core-* kernel-modules-* kernel-uki-virt-*"
