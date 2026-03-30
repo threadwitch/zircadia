@@ -16,8 +16,8 @@ sed -i~ -E 's/=.\$\(command -v (nft|ip6?tables-legacy).*/=/g' /usr/lib/waydroid/
 #   terra-gamescope
 
 dnf -y --enablerepo=terra-mesa install \
-    gamescope.x86_64 \
-    gamescope-libs.x86_64 \
+    terra-gamescope.x86_64 \
+    terra-gamescope-libs.x86_64 \
     gamescope-shaders \
     dbus-x11 \
     evtest \
@@ -34,15 +34,15 @@ dnf -y --enablerepo=terra-mesa install \
     libFAudio.x86_64 \
     vkBasalt.x86_64 \
     mangohud.x86_64 \
-    obs-vkcapture.x86_64 \
-    obs-glcapture.x86_64 \
+    obs-studio-plugin-vkcapture.x86_64 \
+    obs-studio-plugin-glcapture.x86_64 \
     openxr \
-    gamescope-libs.i686 \
+    terra-gamescope-libs.i686 \
     vkBasalt.i686 \
     libFAudio.i686 \
     mangohud.i686 \
-    obs-vkcapture.i686 \
-    obs-glcapture.i686 \
+    obs-studio-plugin-vkcapture.i686 \
+    obs-studio-plugin-glcapture.i686 \
     umu-launcher
 
 if [[ "${BUILD_FLAVOR}" =~ "nvidia" ]] ; then
