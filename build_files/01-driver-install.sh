@@ -4,10 +4,6 @@ set -xeuo pipefail
 
 trap 'dnf config-manager setopt keepcache=0' EXIT
 
-dnf5 -y remove \
-    pipewire-config-raop \
-    mesa-va-drivers
-
 dnf -y config-manager setopt multilib_policy=all
 dnf -y swap --from-repo=terra-mesa mesa-filesystem mesa-filesystem
 dnf -y swap --from-repo=terra-mesa mesa-vulkan-drivers mesa-vulkan-drivers
