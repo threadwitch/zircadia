@@ -10,51 +10,45 @@ dnf -y --enablerepo copr:copr.fedorainfracloud.org:lizardbyte:beta install \
 dnf -y install \
     vulkan-tools \
     waydroid
-sed -i~ -E 's/=.\$\(command -v (nft|ip6?tables-legacy).*/=/g' /usr/lib/waydroid/data/scripts/waydroid-net.sh
 
-# dnf -y --enablerepo=terra --enablerepo=terra-extras install \
-#   terra-gamescope
-
-dnf -y --enablerepo=terra-mesa install \
-    terra-gamescope.x86_64 \
+dnf -y --enablerepo=terra --enablerepo=terra-extras --enablerepo=terra-mesa --from-repo=terra install \
+    terra-gamescope \
     terra-gamescope-libs.x86_64 \
-    gamescope-shaders \
-    dbus-x11 \
-    evtest \
-    asusctl \
+    terra-gamescope-libs.i686 \
+    gamescope-session \
     inputplumber \
     opengamepadui \
     powerstation \
     ScopeBuddy \
-    scx-scheds \
-    scx-tools \
     steam-notif-daemon \
     steamos-manager \
-    steamos-manager-gamescope-session-plus \
+    umu-launcher
+
+dnf -y --enablerepo=terra-mesa install \
+    dbus-x11 \
+    evtest \
+    asusctl \
+    scx-scheds \
+    scx-tools \
     libFAudio.x86_64 \
     vkBasalt.x86_64 \
     mangohud.x86_64 \
-    obs-studio-plugin-vkcapture.x86_64 \
-    obs-studio-plugin-glcapture.x86_64 \
+    obs-studio-plugin-vkcapture \
     openxr \
-    terra-gamescope-libs.i686 \
     vkBasalt.i686 \
     libFAudio.i686 \
-    mangohud.i686 \
-    obs-studio-plugin-vkcapture.i686 \
-    obs-studio-plugin-glcapture.i686 \
-    umu-launcher
+    mangohud.i686
 
 if [[ "${BUILD_FLAVOR}" =~ "nvidia" ]] ; then
   dnf -y --enablerepo=terra --enablerepo=terra-nvidia --enablerepo=terra-mesa --setopt=install_weak_deps=False install \
     -x falcond \
     steam \
-    lutris
+    faugus
 else
   dnf -y --enablerepo=terra-mesa --setopt=install_weak_deps=False install \
     -x falcond \
     steam \
-    lutris
+    faugus
 fi
 dnf -y remove \
     gamemode

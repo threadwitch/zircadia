@@ -2,8 +2,6 @@
 
 set -xeuo pipefail
 
-dnf install -y dnf5-plugins
-
 dnf config-manager setopt keepcache=1
 dnf config-manager setopt fastestmirror=True
 trap 'dnf config-manager setopt keepcache=0' EXIT
@@ -13,7 +11,6 @@ for copr in \
     ublue-os/bazzite-multilib \
     ublue-os/staging \
     ublue-os/packages \
-    ublue-os/obs-vkcapture \
     ycollet/audinux \
     lizardbyte/beta; \
 do \
@@ -30,12 +27,7 @@ dnf -y config-manager setopt terra-mesa.enabled=0
 dnf -y install \
     https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
     https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
-# sed -i 's@enabled=0@enabled=1@g' /etc/yum.repos.d/negativo17-fedora-multimedia.repo
-
 dnf -y config-manager setopt "*rpmfusion*".enabled=0
-
-dnf -y config-manager addrepo --from-repofile=https://negativo17.org/repos/fedora-steam.repo
-dnf -y config-manager addrepo --from-repofile=https://negativo17.org/repos/fedora-rar.repo
 
 dnf -y config-manager setopt "*bazzite*".priority=1
 dnf -y config-manager setopt "*terra*".priority=3 "*terra*".exclude="nerd-fonts topgradegit steam python3-protobuf zlib-devel"
