@@ -27,10 +27,12 @@ dnf -y config-manager addrepo --overwrite --from-repofile=https://pkgs.tailscale
 dnf -y --enablerepo=terra --enablerepo=terra-extras install terra-release-mesa
 dnf -y config-manager setopt terra-mesa.enabled=0
 
-dnf5 -y install \
+dnf -y install \
     https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
     https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
 # sed -i 's@enabled=0@enabled=1@g' /etc/yum.repos.d/negativo17-fedora-multimedia.repo
+
+dnf -y config-manager setopt "*rpmfusion*".enabled=O
 
 dnf -y config-manager addrepo --from-repofile=https://negativo17.org/repos/fedora-steam.repo
 dnf -y config-manager addrepo --from-repofile=https://negativo17.org/repos/fedora-rar.repo
