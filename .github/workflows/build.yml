@@ -53,7 +53,7 @@ jobs:
         env:
           BUILD_FLAVOR: ${{ matrix.flavor }}
         run: |
-          if [ "${BUILD_FLAVOR}" != "", "nvidia"] ; then
+          if [ "${BUILD_FLAVOR}" != "" ] ; then
             echo "IMAGE_NAME=${IMAGE_NAME}-${{ matrix.flavor }}" >> $GITHUB_ENV
           fi
 
