@@ -18,14 +18,15 @@ dnf -y --enablerepo=terra --enablerepo=terra-extras --enablerepo=terra-mesa --fr
     ScopeBuddy \
     steam-notif-daemon \
     steamos-manager \
+    dkms-xone \
+    scx-scheds \
+    scx-tools \
+    asusctl \
     umu-launcher
 
 dnf -y install \
     dbus-x11 \
     evtest \
-    asusctl \
-    scx-scheds \
-    scx-tools \
     libFAudio.x86_64 \
     vkBasalt.x86_64 \
     mangohud \
