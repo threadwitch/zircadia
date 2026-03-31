@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 export PROTON_ENABLE_WOW64=1
 export PROTON_USE_WOW64=1
 export PROTON_ENABLE_NTSYNC=1

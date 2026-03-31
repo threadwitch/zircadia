@@ -54,3 +54,25 @@ quick-iterate:
     podman build -t zirconium:latest .
     just rootful
     BUILD_BASE_DIR=/tmp just disk-image
+
+lint:
+    #!/usr/bin/env bash
+    set -eoux pipefail
+    # Check if shellcheck is installed
+    if ! command -v shellcheck &> /dev/null; then
+        echo "shellcheck could not be found. Please install it."
+        exit 1
+    fi
+    # Run shellcheck on all Bash scripts
+    /usr/bin/find . -iname "*.sh" -type f -exec shellcheck "{}" ';'
+
+format:
+    #!/usr/bin/env bash
+    set -eoux pipefail
+    # Check if shfmt is installed
+    if ! command -v shfmt &> /dev/null; then
+        echo "shellcheck could not be found. Please install it."
+        exit 1
+    fi
+    # Run shfmt on all Bash scripts
+    /usr/bin/find . -iname "*.sh" -type f -exec shfmt --write "{}" ';'

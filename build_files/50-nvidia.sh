@@ -2,8 +2,8 @@
 
 set -xeuo pipefail
 
-if [[ ! "${BUILD_FLAVOR}" =~ "nvidia" ]] ; then
-  exit 0
+if [[ ! "${BUILD_FLAVOR}" =~ "nvidia" ]]; then
+	exit 0
 fi
 
 # We just need to rebuild it since the base image already has these :)

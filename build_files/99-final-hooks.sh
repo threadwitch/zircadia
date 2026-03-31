@@ -7,7 +7,7 @@ s|^NAME=.*|NAME=\"Zircadia\"|
 s|^PRETTY_NAME=.*|PRETTY_NAME=\"Zircadia\"|
 EOF
 
-echo 'import "/usr/share/zirconium/just/67-gamerslop.just"' >> /usr/share/zirconium/just/00-start.just
+echo 'import "/usr/share/zirconium/just/67-gamerslop.just"' >>/usr/share/zirconium/just/00-start.just
 
 KERNEL_VERSION="$(find "/usr/lib/modules" -maxdepth 1 -type d ! -path "/usr/lib/modules" -exec basename '{}' ';' | sort | tail -n 1)"
 export DRACUT_NO_XATTR=1

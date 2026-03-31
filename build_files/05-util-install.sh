@@ -6,9 +6,9 @@ set -xeou pipefail
 dnf -y --enablerepo=rpmfusion-nonfree --enablerepo=rpmfusion-free install --allowerasing megasync
 
 dnf -y --enablerepo=terra install \
-    helium-browser-bin \
-    discord \
-    vencord-installer
+	helium-browser-bin \
+	discord \
+	vencord-installer
 
 dnf -y --enablerepo="*mullvad*" install mullvad-vpn
 

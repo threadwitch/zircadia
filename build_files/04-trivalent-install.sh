@@ -15,4 +15,4 @@ rpmkeys --import "${secureblue_gpg_key_path}"
 dnf -y copr enable secureblue/packages
 dnf -y copr disable secureblue/packages
 dnf -y --enablerepo copr:copr.fedorainfracloud.org:secureblue:packages install \
-  trivalent-subresource-filter
+	trivalent-subresource-filter
