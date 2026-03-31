@@ -12,6 +12,14 @@ dnf -y copr disable bieszczaders/kernel-cachyos
 dnf -y copr enable bieszczaders/kernel-cachyos-addons
 dnf -y copr disable bieszczaders/kernel-cachyos-addons
 
+dnf -y --enablerepo copr:copr.fedorainfracloud.org:bieszczaders:kernel-cachyos install \
+    kernel-cachyos \
+    kernel-cachyos-devel
+
+dnf -y --enablerepo copr:copr.fedorainfracloud.org:bieszczaders:kernel-cachyos-addons swap \
+    zram-generator-defaults \
+    cachyos-settings
+
 dnf -y config-manager addrepo --from-repofile=https://repository.mullvad.net/rpm/stable/mullvad.repo
 dnf -y config-manager setopt "*mullvad*".enabled=0
 
