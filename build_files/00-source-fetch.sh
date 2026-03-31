@@ -13,7 +13,7 @@ dnf -y copr enable bieszczaders/kernel-cachyos-addons
 dnf -y copr disable bieszczaders/kernel-cachyos-addons
 
 dnf -y config-manager addrepo --from-repofile=https://repository.mullvad.net/rpm/stable/mullvad.repo
-dnf -y config-manager setopt "mullvad".enabled=0
+dnf -y config-manager setopt "*mullvad*".enabled=0
 
 
 dnf -y --enablerepo=terra --enablerepo=terra-extras install terra-release-mesa

@@ -10,7 +10,7 @@ dnf -y --enablerepo=terra install \
     discord \
     vencord-installer
 
-dnf -y --enablerepo=mullvad install mullvad-vpn
+dnf -y --enablerepo="*mullvad*" install mullvad-vpn
 
 # Apparently this should help with printing issues?
 dnf -y install system-config-printer-applet
