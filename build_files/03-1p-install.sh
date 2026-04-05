@@ -127,3 +127,6 @@ rm -f /usr/lib/sysusers.d/30-rpmostree-pkg-group-onepassword-cli.conf
 cat >/usr/lib/tmpfiles.d/onepassword.conf <<EOF
 L  /opt/1Password  -  -  -  -  /usr/lib/1Password
 EOF
+
+echo 'trivalent' >> /etc/1Password/custom_allowed_browsers
+echo 'helium-browser-bin' >> /etc/1Password/custom_allowed_browsers

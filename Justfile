@@ -1,5 +1,5 @@
 
-image := env("IMAGE_FULL", "zircadia:latest")
+image := env("IMAGE_FULL", "ghcr.io/threadwitch/zircadia:latest")
 filesystem := env("BUILD_FILESYSTEM", "ext4")
 
 # Commenting these out to try the generic ublue
