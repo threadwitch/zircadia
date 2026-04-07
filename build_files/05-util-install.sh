@@ -26,6 +26,7 @@ dnf -y install \
 	google-roboto-slab-fonts \
 	vernnobile-oswald-fonts
 
+# Moar fonts
 dnf -y --enablerepo=terra install \
 	0xproto-nerd-fonts \
 	ia-writer-nerd-fonts \

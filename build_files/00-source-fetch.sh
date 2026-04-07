@@ -20,6 +20,11 @@ trap 'dnf config-manager setopt keepcache=0' EXIT
 #     zram-generator-defaults \
 #     cachyos-settings
 
+dnf -y config-manager addrepo --from-repofile=https://negativo17.org/repos/fedora-multimedia.repo
+dnf -y config-manager addrepo --from-repofile=https://negativo17.org/repos/fedora-steam.repo
+dnf -y config-manager addrepo --from-repofile=https://negativo17.org/repos/fedora-nvidia.repo
+dnf -y config-manager setopt "*negativo17*".enabled=0
+
 dnf -y config-manager addrepo --from-repofile=https://repository.mullvad.net/rpm/stable/mullvad.repo
 dnf -y config-manager setopt "*mullvad*".enabled=0
 
