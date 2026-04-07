@@ -5,7 +5,14 @@ set -xeuo pipefail
 # "borrowing" from https://github.com/tulilirockz/sysext-trivalent/blob/main/install-trivalent.sh
 curl -fLsS --retry 5 -o /etc/yum.repos.d/repo.secureblue.dev.secureblue.repo https://repo.secureblue.dev/secureblue.repo
 
-dnf --best --repo=secureblue -y install trivalent
+dnf --best --repo=secureblue -y install trivalent trivalent-selinux
+
+dnf -y install \
+	selinux-policy-devel \
+	selinux-policy-doc \
+	setroubleshoot-server \
+	setools-console \
+	policycoreutils-python
 
 secureblue_gpg_key_path="$(dnf repo info secureblue --json | jq -r '.[0].gpg_key.[0]')"
 
