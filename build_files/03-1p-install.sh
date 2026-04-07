@@ -127,3 +127,7 @@ rm -f /usr/lib/sysusers.d/30-rpmostree-pkg-group-onepassword-cli.conf
 cat >/usr/lib/tmpfiles.d/onepassword.conf <<EOF
 L  /opt/1Password  -  -  -  -  /usr/lib/1Password
 EOF
+
+cat >/etc/1password/custom_allowed_browsers <<EOF
+helium
+EOF
