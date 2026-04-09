@@ -5,8 +5,6 @@ set -xeou pipefail
 dnf -y --enablerepo=terra install \
 	helium-browser-bin
 
-dnf -y --enablerepo="*mullvad*" install mullvad-vpn
-
 # Apparently this should help with printing issues?
 dnf -y install system-config-printer system-config-printer-applet
 
