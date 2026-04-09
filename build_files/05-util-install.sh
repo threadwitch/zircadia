@@ -3,6 +3,14 @@
 set -xeou pipefail
 
 dnf -y --enablerepo=terra install \
+	yazi \
+	7zip \
+	poppler \
+	fd-find \
+	ripgrep \
+	fzf \
+	zoxide \
+	ImageMagick \
 	helium-browser-bin
 
 # Apparently this should help with printing issues?

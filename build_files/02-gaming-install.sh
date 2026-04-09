@@ -4,10 +4,10 @@ set -xeuo pipefail
 
 trap 'dnf config-manager setopt keepcache=0' EXIT
 
-dnf -y --enablerepo copr:copr.fedorainfracloud.org:lizardbyte:beta install \
-	Sunshine
+# dnf -y --enablerepo copr:copr.fedorainfracloud.org:lizardbyte:beta install \
+# 	Sunshine
 
-dnf -y --enablerepo=terra --enablerepo=terra-extras --enablerepo=fedora-multimedia --from-repo=terra install \
+dnf -y --enablerepo=terra --enablerepo=terra-extras --enablerepo=fedora-multimedia install \
 	terra-gamescope \
 	terra-gamescope-libs.x86_64 \
 	terra-gamescope-libs.i686 \
@@ -37,16 +37,18 @@ dnf -y install \
 if [[ "${BUILD_FLAVOR}" =~ "nvidia" ]]; then
 	dnf -y --enablerepo=terra --enablerepo=terra-nvidia --enablerepo=terra-mesa --setopt=install_weak_deps=False install \
 		-x falcond \
-		steam \
-		faugus
+		steam
 else
-	dnf -y --enablerepo=terra --enablerepo=fedora-multimedia --setopt=install_weak_deps=False install \
+	dnf -y --enablerepo=fedora-steam --enablerepo=fedora-multimedia --setopt=install_weak_deps=False install \
 		-x falcond \
-		steam \
-		faugus
+		steam
 fi
 dnf -y remove \
 	gamemode
+
+dnf -y copr enable faugus/faugus-launcher
+dnf -y install faugus-launcher
+dnf -y copr disable faugus/faugus-launcher
 
 curl "https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks" -Lo /usr/bin/winetricks &&
 	chmod +x /usr/bin/winetricks &&
