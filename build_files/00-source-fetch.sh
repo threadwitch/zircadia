@@ -2,9 +2,10 @@
 
 set -xeuo pipefail
 
-dnf config-manager setopt keepcache=1
-dnf config-manager setopt fastestmirror=True
-trap 'dnf config-manager setopt keepcache=0' EXIT
+dnf -y config-manager setopt keepcache=1
+dnf -y config-manager setopt fastestmirror=True
+dnf -y config-manager setopt install_weak_deps=False
+trap 'dnf -y config-manager setopt keepcache=0' EXIT
 
 # dnf -y copr enable bieszczaders/kernel-cachyos
 # dnf -y copr disable bieszczaders/kernel-cachyos
@@ -24,9 +25,6 @@ dnf -y config-manager addrepo --from-repofile=https://negativo17.org/repos/fedor
 dnf -y config-manager addrepo --from-repofile=https://negativo17.org/repos/fedora-steam.repo
 dnf -y config-manager setopt fedora-multimedia.enabled=0
 dnf -y config-manager setopt fedora-steam.enabled=0
-
-dnf -y config-manager addrepo --from-repofile=https://repository.mullvad.net/rpm/stable/mullvad.repo
-dnf -y config-manager setopt "*mullvad*".enabled=0
 
 # dnf -y --enablerepo=terra --enablerepo=terra-extras install terra-release-mesa
 # dnf -y config-manager setopt terra-mesa.enabled=0
