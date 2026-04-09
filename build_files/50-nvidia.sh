@@ -2,6 +2,10 @@
 
 set -xeuo pipefail
 
+if [[ ! "${BUILD_FLAVOR}" =~ "nvidia" ]] ; then
+  exit 0
+fi
+
 NVIDIA_VERSION="$(basename "$(find /usr/src -iname "*nvidia-*" -type d -maxdepth 1)" | cut -d- -f2)"
 
 # we need to override the `OUTPUTDIR` environment variable due to it being set by mkosi
