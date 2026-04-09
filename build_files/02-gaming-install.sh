@@ -7,18 +7,15 @@ trap 'dnf config-manager setopt keepcache=0' EXIT
 dnf -y --enablerepo copr:copr.fedorainfracloud.org:lizardbyte:beta install \
 	Sunshine
 
-dnf -y --enablerepo=terra --enablerepo=terra-extras --enablerepo=terra-mesa --from-repo=terra install \
+dnf -y --enablerepo=terra --enablerepo=terra-extras --enablerepo=fedora-multimedia --from-repo=terra install \
 	terra-gamescope \
 	terra-gamescope-libs.x86_64 \
 	terra-gamescope-libs.i686 \
-	gamescope-session \
 	inputplumber \
-	opengamepadui \
 	powerstation \
 	ScopeBuddy \
 	steam-notif-daemon \
 	steamos-manager \
-	dkms-xone \
 	scx-scheds \
 	scx-tools \
 	asusctl \
@@ -43,7 +40,7 @@ if [[ "${BUILD_FLAVOR}" =~ "nvidia" ]]; then
 		steam \
 		faugus
 else
-	dnf -y --enablerepo=terra-mesa --setopt=install_weak_deps=False install \
+	dnf -y --enablerepo=terra --enablerepo=fedora-multimedia --setopt=install_weak_deps=False install \
 		-x falcond \
 		steam \
 		faugus
@@ -58,5 +55,5 @@ curl "https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetri
 mkdir -p /usr/share/sdl/
 curl "https://raw.githubusercontent.com/mdqinc/SDL_GameControllerDB/refs/heads/master/gamecontrollerdb.txt" -Lo /usr/share/sdl/gamecontrollerdb.txt
 
-dnf info mesa-filesystem | grep -F -e "Terra"
+# dnf info mesa-filesystem | grep -F -e "Terra"
 rpm -qa | grep -v -E "^gamescope" &>/dev/null

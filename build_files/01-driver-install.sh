@@ -7,7 +7,7 @@ trap 'dnf config-manager setopt keepcache=0' EXIT
 dnf -y swap --from-repo=fedora-multimedia mesa-filesystem mesa-filesystem
 dnf -y swap --from-repo=fedora-multimedia libva libva
 dnf -y swap --from-repo=fedora-multimedia libva-intel-media-driver libva-intel-media-driver
-dnf -y install --from-repo=fedora-multimedia mesa-vulkan-drivers.i686
+dnf -y install --from-repo=fedora-multimedia mesa-vulkan-drivers.i686 libfreeaptx libfdk-aac libpostproc
 
 dnf -y swap --from-repo=fedora-multimedia ffmpeg-free ffmpeg
 dnf -y swap --from-repo=fedora-multimedia libavcodec-free libavcodec
@@ -34,6 +34,6 @@ dnf versionlock add \
 	libavutil \
 	libpostproc \
 	libswresample \
-	libswscale
-
-dnf5 -y install --enable-repo="*rpmfusion*" libaacs libfreeaptx
+	libswscale \
+	libfreeaptx \
+	libfdk-aac

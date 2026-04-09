@@ -42,4 +42,8 @@ dnf -y --enablerepo=terra install \
 	opendyslexic-nerd-fonts
 
 # I don't want this
-dnf -y remove valent
+dnf -y remove \
+	valent \
+	firefox \
+	firefox-langpacks \
+	fedora-chromium-config
