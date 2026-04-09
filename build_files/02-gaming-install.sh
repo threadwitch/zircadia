@@ -35,7 +35,7 @@ dnf -y install \
 	vulkan-tools
 
 if [[ "${BUILD_FLAVOR}" =~ "nvidia" ]]; then
-	dnf -y --enablerepo=terra --enablerepo=terra-nvidia --enablerepo=terra-mesa --setopt=install_weak_deps=False install \
+	dnf -y --enablerepo=fedora-steam --enablerepo=fedora-nvidia --enablerepo=fedora-multimedia --setopt=install_weak_deps=False install \
 		-x falcond \
 		steam
 else

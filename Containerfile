@@ -87,10 +87,10 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 #     --network=none \
 #     /ctx/build/09-gaming-post.sh
 
-# RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
-#     --mount=type=tmpfs,dst=/boot \
-#     --network=none \
-#     /ctx/build/50-nvidia.sh
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=tmpfs,dst=/boot \
+    --network=none \
+    /ctx/build/50-nvidia.sh
 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=tmpfs,dst=/run \

@@ -2,15 +2,15 @@
 
 set -xeuo pipefail
 
-if [[ ! "${BUILD_FLAVOR}" =~ "nvidia" ]]; then
-	exit 0
-fi
+NVIDIA_VERSION="$(basename "$(find /usr/src -iname "*nvidia-*" -type d -maxdepth 1)" | cut -d- -f2)"
 
-# We just need to rebuild it since the base image already has these :)
-
-mkdir -p /var/log/akmods /var/tmp
-chmod 1777 /var/tmp
+# we need to override the `OUTPUTDIR` environment variable due to it being set by mkosi
 KERNEL_VERSION="$(find "/usr/lib/modules" -maxdepth 1 -type d ! -path "/usr/lib/modules" -exec basename '{}' ';' | sort | tail -n 1)"
-akmods --force --kernels "${KERNEL_VERSION}" --kmod "nvidia"
-cat /var/cache/akmods/nvidia/*.failed.log || true
-stat "/usr/lib/modules/${KERNEL_VERSION}"/extra/nvidia/nvidia*.ko* # Ensuring kmods exist
+OUTPUTDIR=out dkms install --force -m "nvidia/${NVIDIA_VERSION}" -k "${KERNEL_VERSION}"
+find /usr/lib/modules -iname "nvidia*.ko*"
+stat "/usr/lib/modules/${KERNEL_VERSION}"/extra/nvidia*.ko* # We actually need the kernel objects after build LOL
+
+# we must force driver load to fix black screen on boot for nvidia desktops
+sed -i 's/omit_drivers/force_drivers/g' /usr/lib/dracut/dracut.conf.d/99-nvidia.conf
+# as we need forced load, also must pre-load intel/amd iGPU else chromium web browsers fail to use hardware acceleration
+sed -i 's/ nvidia / i915 amdgpu nvidia /g' /usr/lib/dracut/dracut.conf.d/99-nvidia.conf
