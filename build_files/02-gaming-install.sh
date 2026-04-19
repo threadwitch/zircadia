@@ -21,7 +21,7 @@ dnf -y --enablerepo=terra --enablerepo=terra-extras --enablerepo=fedora-multimed
 	asusctl \
 	umu-launcher
 
-dnf -y --enablerepo=fedora-multimedia install \
+dnf -y --setopt=install_weak_deps=False install \
 	dbus-x11 \
 	evtest \
 	libFAudio.x86_64 \
