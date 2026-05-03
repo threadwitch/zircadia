@@ -2,12 +2,44 @@
 
 set -xeuo pipefail
 
-for pkg in kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra; do
-	rpm --erase $pkg --nodeps
+echo "::group::Executing install-kernel-akmods"
+trap 'echo "::endgroup::"' EXIT
+
+# create a shims to bypass kernel install triggering dracut/rpm-ostree
+# seems to be minimal impact, but allows progress on build
+pushd /usr/lib/kernel/install.d
+mv 05-rpmostree.install 05-rpmostree.install.bak
+mv 50-dracut.install 50-dracut.install.bak
+printf '%s\n' '#!/bin/sh' 'exit 0' > 05-rpmostree.install
+printf '%s\n' '#!/bin/sh' 'exit 0' > 50-dracut.install
+chmod +x  05-rpmostree.install 50-dracut.install
+popd
+
+# Remove Existing Kernel
+for pkg in kernel kernel{-core,-modules,-modules-core,-modules-extra,-tools-libs,-tools}; do
+    rpm --erase "${pkg}" --nodeps
 done
 
+# cleanup leftovers that are not covered by kernel-* packages for some reason
+rm -rf /usr/lib/modules
+
+dnf5 -y install \
+    /tmp/kernel-rpms/kernel-[0-9]*.rpm \
+    /tmp/kernel-rpms/kernel-core-*.rpm \
+    /tmp/kernel-rpms/kernel-modules-*.rpm \
+    /tmp/kernel-rpms/kernel-devel-*.rpm
+
+dnf5 versionlock add kernel kernel-devel kernel-devel-matched kernel-core kernel-modules
+
+/ctx/build/00-install-kmods \
+    /tmp/rpms/{common,kmods}/*v4l2loopback*.rpm \
+
 pushd /usr/lib/kernel/install.d
-printf '%s\n' '#!/bin/sh' 'exit 0' >05-rpmostree.install
-printf '%s\n' '#!/bin/sh' 'exit 0' >50-dracut.install
-chmod +x 05-rpmostree.install 50-dracut.install
+mv -f 05-rpmostree.install.bak 05-rpmostree.install
+mv -f 50-dracut.install.bak 50-dracut.install
 popd
+
+rm -rf /tmp/* || true
+rm -rf /var/log/dnf5.log || true
+rm -rf /boot/* || true
+rm -rf /boot/.* || true
