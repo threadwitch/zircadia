@@ -66,14 +66,6 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache/libdnf5 \
     /ctx/build/05-util-install.sh
 
-# RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
-#     --mount=type=tmpfs,dst=/var \
-#     --mount=type=tmpfs,dst=/tmp \
-#     --mount=type=tmpfs,dst=/run \
-#     --mount=type=tmpfs,dst=/boot \
-#     --network=none \
-#     /ctx/build/09-gaming-post.sh
-
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=tmpfs,dst=/boot \
     --network=none \
