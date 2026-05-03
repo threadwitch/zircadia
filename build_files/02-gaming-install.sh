@@ -7,8 +7,8 @@ trap 'dnf config-manager setopt keepcache=0' EXIT
 # dnf -y --enablerepo copr:copr.fedorainfracloud.org:lizardbyte:beta install \
 # 	Sunshine
 
-dnf -y --enablerepo=terra --enablerepo=terra-extras --enablerepo=fedora-multimedia install \
-	terra-gamescope \
+dnf -y --enablerepo=terra --enablerepo=terra-mesa install \
+	terra-gamescope.x86_64 \
 	terra-gamescope-libs.x86_64 \
 	terra-gamescope-libs.i686 \
 	inputplumber \
@@ -19,27 +19,28 @@ dnf -y --enablerepo=terra --enablerepo=terra-extras --enablerepo=fedora-multimed
 	scx-scheds \
 	scx-tools \
 	asusctl \
+	libFAudio.x86_64 \
+	libFAudio.i686 \
+	vkBasalt.x86_64 \
+	vkBasalt.i686 \
+	dbus-x11 \
+	evtest \
+	mangohud \
+	obs-studio-plugin-vkcapture-hook-libs.x86_64 \
+	obs-studio-plugin-vkcapture-hook-libs.i686 \
+	openxr \
 	umu-launcher
 
 dnf -y --setopt=install_weak_deps=False install \
-	dbus-x11 \
-	evtest \
-	libFAudio.x86_64 \
-	vkBasalt.x86_64 \
-	mangohud \
-	obs-studio-plugin-vkcapture \
-	openxr \
-	vkBasalt.i686 \
-	libFAudio.i686 \
 	waydroid \
 	vulkan-tools
 
 if [[ "${BUILD_FLAVOR}" =~ "nvidia" ]]; then
-	dnf -y --enablerepo=fedora-steam --enablerepo=fedora-nvidia --enablerepo=fedora-multimedia --setopt=install_weak_deps=False install \
+	dnf -y --enablerepo=terra --enablerepo=terra-nvidia --enablerepo=terra-mesa --setopt=install_weak_deps=False install \
 		-x falcond \
 		steam
 else
-	dnf -y --enablerepo=fedora-steam --enablerepo=fedora-multimedia --setopt=install_weak_deps=False install \
+	dnf -y --enablerepo=terra --enablerepo=terra-mesa --setopt=install_weak_deps=False install \
 		-x falcond \
 		steam
 fi

@@ -4,7 +4,6 @@ set -xeuo pipefail
 
 dnf -y config-manager setopt keepcache=1
 dnf -y config-manager setopt fastestmirror=True
-dnf -y config-manager setopt install_weak_deps=False
 trap 'dnf -y config-manager setopt keepcache=0' EXIT
 
 # dnf -y copr enable bieszczaders/kernel-cachyos
@@ -21,20 +20,11 @@ trap 'dnf -y config-manager setopt keepcache=0' EXIT
 #     zram-generator-defaults \
 #     cachyos-settings
 
-dnf -y config-manager addrepo --from-repofile=https://negativo17.org/repos/fedora-multimedia.repo
-dnf -y config-manager addrepo --from-repofile=https://negativo17.org/repos/fedora-steam.repo
-# dnf -y config-manager addrepo --from-repofile=https://negativo17.org/repos/fedora-nvidia.repo
-dnf -y config-manager setopt fedora-multimedia.enabled=0
-dnf -y config-manager setopt fedora-steam.enabled=0
-# dnf -y config-manager setopt fedora-nvidia.enabled=0
-
-# dnf -y --enablerepo=terra --enablerepo=terra-extras install terra-release-mesa
-# dnf -y config-manager setopt terra-mesa.enabled=0
-
-# dnf -y install \
-# 	https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
-# 	https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
-# dnf -y config-manager setopt "*rpmfusion*".enabled=0
+dnf -y --enablerepo=terra --enablerepo=terra-extras install \
+    terra-release-mesa \
+    terra-release-nvidia
+dnf -y config-manager setopt terra-mesa.enabled=0
+dnf -y config-manager setopt terra-nvidia.enabled=0
 
 dnf -y copr enable lizardbyte/beta
 dnf -y copr disable lizardbyte/beta
