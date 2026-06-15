@@ -2,11 +2,9 @@
 
 set -xeuo pipefail
 
-trap 'dnf config-manager setopt keepcache=0' EXIT
-
 dnf -y swap --from-repo=terra-mesa mesa-filesystem mesa-filesystem
 
-dnf -y --enable-repo=terra-mesa install \
+dnf -y --enablerepo=terra-mesa install \
 	mesa-libOpenCL \
 	intel-opencl \
 	clinfo

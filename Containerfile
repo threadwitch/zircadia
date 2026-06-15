@@ -5,7 +5,6 @@ ARG KERNEL_FLAVOR="${KERNEL_FLAVOR:-ogc}"
 ARG KERNEL_VERSION="${KERNEL_VERSION:-6.19.14-ogc1.1.fc44.x86_64}"
 
 FROM ghcr.io/ublue-os/akmods:${KERNEL_FLAVOR}-${FEDORA_VERSION}-${KERNEL_VERSION} AS akmods
-FROM ghcr.io/ublue-os/akmods-${NVIDIA_FLAVOR}:${KERNEL_FLAVOR}-${FEDORA_VERSION}-${KERNEL_VERSION} AS akmods-nvidia
 
 FROM scratch AS ctx
 

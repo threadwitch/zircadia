@@ -2,9 +2,11 @@
 
 set -xeuo pipefail
 
+# keepcache=1 lets the --mount=type=cache,dst=/var/cache/libdnf5 cache persist
+# across all build steps. It is intentionally left enabled for the rest of the
+# build; the cache mount is not part of the shipped image.
 dnf -y config-manager setopt keepcache=1
 dnf -y config-manager setopt fastestmirror=True
-trap 'dnf -y config-manager setopt keepcache=0' EXIT
 
 # dnf -y copr enable bieszczaders/kernel-cachyos
 # dnf -y copr disable bieszczaders/kernel-cachyos

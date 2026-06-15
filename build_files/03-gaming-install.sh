@@ -2,8 +2,6 @@
 
 set -xeuo pipefail
 
-trap 'dnf config-manager setopt keepcache=0' EXIT
-
 # dnf -y --enablerepo copr:copr.fedorainfracloud.org:lizardbyte:beta install \
 # 	Sunshine
 
@@ -47,9 +45,9 @@ fi
 dnf -y remove \
 	gamemode
 
-dnf -y copr enable faugus/faugus-launcher
-dnf -y install faugus-launcher
-dnf -y copr disable faugus/faugus-launcher
+# faugus-launcher is delivered as a Flatpak (Layer 4) via
+# system_files/usr/share/flatpak/preinstall.d/faugus.preinstall — do not also
+# install the RPM here.
 
 curl "https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks" -Lo /usr/bin/winetricks &&
 	chmod +x /usr/bin/winetricks &&
@@ -57,6 +55,3 @@ curl "https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetri
 
 mkdir -p /usr/share/sdl/
 curl "https://raw.githubusercontent.com/mdqinc/SDL_GameControllerDB/refs/heads/master/gamecontrollerdb.txt" -Lo /usr/share/sdl/gamecontrollerdb.txt
-
-# dnf info mesa-filesystem | grep -F -e "Terra"
-rpm -qa | grep -v -E "^gamescope" &>/dev/null
