@@ -6,6 +6,27 @@
 
   "rebaseWhen": "never",
 
+  // Keep base-image digest bumps to a reviewed weekly cadence rather than a
+  // continuous stream of PRs (issue #2).
+  "schedule": ["before 6am on monday"],
+
+  // The zirconium base images are referenced as build-args / shell assignments
+  // rather than in a place Renovate's built-in managers parse, so detect the
+  // digest-pinned references via the `# renovate:` annotations next to them.
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/build\\.yml$/",
+        "/^Justfile$/",
+      ],
+      "matchStrings": [
+        "datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s[\\s\\S]*?:(?<currentValue>\\S+?)@(?<currentDigest>sha256:[a-f0-9]{64})",
+      ],
+      "datasourceTemplate": "docker",
+    },
+  ],
+
   "packageRules": [
     {
       "automerge": true,
@@ -16,6 +37,15 @@
       "matchUpdateTypes": ["digest", "pinDigest", "pin"],
       "matchDepTypes": ["container"],
       "matchFileNames": [".github/workflows/**.yaml", ".github/workflows/**.yml"],
+    },
+    {
+      // Base-image digest bumps are reviewed merges, never auto-merged.
+      "matchDepNames": [
+        "ghcr.io/zirconium-dev/zirconium",
+        "ghcr.io/zirconium-dev/zirconium-nvidia",
+      ],
+      "groupName": "zirconium base image",
+      "automerge": false,
     },
   ]
 }

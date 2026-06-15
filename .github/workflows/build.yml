@@ -4,8 +4,6 @@ on:
   pull_request:
     branches:
       - main
-  schedule:
-    - cron: "35 10 * * *" # 10:05am UTC everyday
   push:
     branches:
       - main
@@ -62,9 +60,11 @@ jobs:
           BUILD_FLAVOR: ${{ matrix.flavor }}
         run: |
           if [ "${BUILD_FLAVOR}" == "nvidia" ] ; then
-            echo "BASE_IMAGE=ghcr.io/zirconium-dev/zirconium-nvidia" >> $GITHUB_ENV
+            # renovate: datasource=docker depName=ghcr.io/zirconium-dev/zirconium-nvidia
+            echo "BASE_IMAGE=ghcr.io/zirconium-dev/zirconium-nvidia:latest@sha256:695d38ef1c28ab5ebbd98a66834b62846c7ccacca8355dfef2fd1b4014f4b70a" >> $GITHUB_ENV
           else
-            echo "BASE_IMAGE=ghcr.io/zirconium-dev/zirconium" >> $GITHUB_ENV
+            # renovate: datasource=docker depName=ghcr.io/zirconium-dev/zirconium
+            echo "BASE_IMAGE=ghcr.io/zirconium-dev/zirconium:latest@sha256:149f7dcdae2f16c0ad872f4f28b971228e623053cb5f7077b8ae4dd6aa74e5da" >> $GITHUB_ENV
           fi
 
       - name: Build image
