@@ -2,8 +2,6 @@
 
 set -xeuo pipefail
 
-trap 'dnf config-manager setopt keepcache=0' EXIT
-
 # dnf -y --enablerepo copr:copr.fedorainfracloud.org:lizardbyte:beta install \
 # 	Sunshine
 
@@ -57,6 +55,3 @@ curl "https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetri
 
 mkdir -p /usr/share/sdl/
 curl "https://raw.githubusercontent.com/mdqinc/SDL_GameControllerDB/refs/heads/master/gamecontrollerdb.txt" -Lo /usr/share/sdl/gamecontrollerdb.txt
-
-# dnf info mesa-filesystem | grep -F -e "Terra"
-rpm -qa | grep -v -E "^gamescope" &>/dev/null
