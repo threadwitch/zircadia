@@ -100,10 +100,13 @@ jobs:
           TARGET_IMAGE="${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}-${PLATFORM}"
 
           push_image() {
-            rm -f "${DIGEST_FILE}"
             for i in $(seq "${MAX_RETRIES}"); do
+              # The push runs under sudo, so Podman writes this file as root.
+              # Remove it under sudo before each attempt; /tmp is sticky and
+              # the runner user cannot unlink a root-owned digest file there.
+              sudo rm -f "${DIGEST_FILE}"
               if sudo "${BREW_PODMAN}" push --digestfile="${DIGEST_FILE}" "localhost/${IMAGE_NAME}:${DEFAULT_TAG}" "${TARGET_IMAGE}"; then
-                if [ -s "${DIGEST_FILE}" ]; then
+                if sudo test -s "${DIGEST_FILE}"; then
                   return 0
                 fi
                 echo "::error::Podman push succeeded but did not write ${DIGEST_FILE}"
@@ -120,7 +123,7 @@ jobs:
           push_image
           push_image
 
-          REMOTE_IMAGE_DIGEST="$(< "${DIGEST_FILE}")"
+          REMOTE_IMAGE_DIGEST="$(sudo cat "${DIGEST_FILE}")"
           if [ -z "${REMOTE_IMAGE_DIGEST}" ]; then
             echo "::error::remote_image_digest is empty after push"
             exit 1
