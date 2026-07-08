@@ -8,15 +8,13 @@ Zircadia is a thin customization layer built on top of
 [zirconium](https://github.com/zirconium-dev) (Fedora + niri), published as an
 OCI image to GHCR and delivered with bootc.
 
-- Base: `ghcr.io/zirconium-dev/zirconium` (and `-nvidia` for NVIDIA hardware)
-- Image: `ghcr.io/threadwitch/zircadia:latest` (and `zircadia-nvidia:latest`)
+- Base: `ghcr.io/zirconium-dev/zirconium`
+- Image: `ghcr.io/threadwitch/zircadia:latest`
 
 ## What it adds on top of the base
 
 - **Gaming:** Steam, gamescope, MangoHud, vkBasalt, umu-launcher, faugus-launcher
   (Flatpak), ScopeBuddy, scx schedulers, InputPlumber, Waydroid, and related bits.
-- **NVIDIA:** an `-nvidia` flavor that builds the proprietary driver via dkms and
-  forces module load to avoid black-screen-on-boot.
 - **1Password:** desktop app + CLI, integrated for an ostree/bootc system
   (installed under `/usr/lib`, `/opt` symlink created at boot via tmpfiles.d,
   groups provisioned via sysusers.d). Helium is registered as an allowed browser.
@@ -34,8 +32,6 @@ From an existing bootc system (Fedora Atomic, Bazzite, Bluefin, Aurora, …):
 
 ```bash
 sudo bootc switch ghcr.io/threadwitch/zircadia:latest
-# or, for NVIDIA hardware:
-sudo bootc switch ghcr.io/threadwitch/zircadia-nvidia:latest
 ```
 
 Reboot to apply.
@@ -68,7 +64,6 @@ Requires `just` and `podman`.
 
 ```bash
 just build          # build zircadia:latest
-just build-nvidia   # build zircadia-nvidia:latest
 just iso            # build an installer ISO into ./output
 ```
 
@@ -81,7 +76,7 @@ proposed by Renovate (see [`.github/renovate.json5`](./.github/renovate.json5)).
 - [`Containerfile`](./Containerfile) — image build entrypoint; runs the numbered
   scripts in `build_files/`.
 - [`build_files/`](./build_files/) — single-purpose build steps (`01-source-fetch`
-  through `99-final-hooks`); `50-nvidia.sh` is gated on the `nvidia` flavor.
+  through `99-final-hooks`).
 - [`system_files/`](./system_files/) — files copied into the image
   (`/etc`, `/usr`), including the injected `zjust` recipes and Flatpak preinstalls.
 - [`iso.toml`](./iso.toml), [`disk_config/`](./disk_config/) — installer/disk

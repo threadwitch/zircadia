@@ -7,10 +7,6 @@ build:
     # renovate: datasource=docker depName=ghcr.io/zirconium-dev/zirconium
     podman build -t zircadia:latest --build-arg BASE_IMAGE=ghcr.io/zirconium-dev/zirconium:latest@sha256:149f7dcdae2f16c0ad872f4f28b971228e623053cb5f7077b8ae4dd6aa74e5da .
 
-build-nvidia:
-    # renovate: datasource=docker depName=ghcr.io/zirconium-dev/zirconium-nvidia
-    podman build -t zircadia-nvidia:latest --build-arg BUILD_FLAVOR=nvidia --build-arg BASE_IMAGE=ghcr.io/zirconium-dev/zirconium-nvidia:latest@sha256:695d38ef1c28ab5ebbd98a66834b62846c7ccacca8355dfef2fd1b4014f4b70a .
-
 iso $image=image:
     #!/usr/bin/env bash
     mkdir -p output

@@ -13,7 +13,7 @@ A thin customization layer (~8 shell scripts, ~250 lines) over a stack of third-
 
 ```
 Fedora 44
-  └─ zirconium / zirconium-nvidia     ← third-party (zirconium-dev), built with mkosi,
+  └─ zirconium                        ← third-party (zirconium-dev), built with mkosi,
   │                                      tracks niri-git, Terra, DankLinux theming
   └─ zircadia (this repo)             ← Containerfile layer: gaming stack, 1Password,
                                          CLI tools, fonts, YubiKey, branding
@@ -23,8 +23,8 @@ Fedora 44
 
 | Input | Reference | Risk |
 |---|---|---|
-| `ghcr.io/zirconium-dev/zirconium{,-nvidia}` | `:latest` (implicit) | Silent base drift, daily |
-| Terra repos (terra, -mesa, -nvidia, -extras) | live repo | Package drift every build |
+| `ghcr.io/zirconium-dev/zirconium` | `:latest` (implicit) | Silent base drift, daily |
+| Terra repos (terra, -mesa, -extras) | live repo | Package drift every build |
 | COPRs: lizardbyte/beta, faugus | live repo | Package drift, hobby-tier SLA |
 | 1Password rpm repo | live repo, `stable` channel | Acceptable (vendor channel) |
 | winetricks, gamecontrollerdb | raw `master` curls | Unpinned, unverified |
@@ -44,7 +44,7 @@ The image rebuilds daily on cron (`build.yml`), so every unpinned input drifts s
 
 1. **`iso.toml:4` rebases installs to the wrong image** — kickstart runs `bootc switch` to `ghcr.io/zirconium-dev/zirconium:latest`, so ISO installs silently lose all zircadia customization on first update. Fix: point at `ghcr.io/threadwitch/zircadia:latest`.
 2. **Flatpak preinstall silently dead** — `system_files/usr/share/flatpak/preinstall.d/preinstall.d` lacks the required `.preinstall` extension and is ignored. Redundant anyway: faugus-launcher is also installed as an RPM (`03-gaming-install.sh:50`). Pick one.
-3. **`Containerfile:8` references undeclared `${NVIDIA_FLAVOR}`** — expands to an invalid image ref. Only survives because the akmods stages are dead code (kernel install commented out). Fails the moment kernel work is re-enabled. The pinned `KERNEL_VERSION` ARG is stale baggage for the same disabled feature.
+3. **Dead akmods/kernel stage remains** — `Containerfile` still declares `KERNEL_FLAVOR`/`KERNEL_VERSION` and an `akmods` stage even though kernel install is commented out. The pinned `KERNEL_VERSION` ARG is stale baggage that will need deliberate cleanup when kernel work is re-enabled.
 4. **dnf keepcache plumbing incoherent** — `01-source-fetch.sh` enables keepcache then its own EXIT trap disables it before any package-installing script runs; the `/var/cache/libdnf5` cache mount is mostly decorative.
 5. **`build.yml` dead references** — `steps.load.outputs.digest` (no such step); manifest job greps with undefined `${IMAGE}` (works by accident, amd64-only); cron comment disagrees with cron expression.
 6. **Template residue** — README is stock ublue template (documents files that don't exist here); `artifacthub-repo.yml` has placeholder ID; `iso-gnome.toml`/`iso-kde.toml` point at `ublue-os/image-template`; `JustfileU.bak` is dead; both dependabot and renovate run on github-actions; `quick-iterate` recipe builds a tag named `zirconium` and doesn't use it.

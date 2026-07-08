@@ -33,15 +33,9 @@ dnf -y --setopt=install_weak_deps=False install \
 	waydroid \
 	vulkan-tools
 
-if [[ "${BUILD_FLAVOR}" =~ "nvidia" ]]; then
-	dnf -y --enablerepo=terra --enablerepo=terra-nvidia --enablerepo=terra-mesa --setopt=install_weak_deps=False install \
-		-x falcond \
-		steam
-else
-	dnf -y --enablerepo=terra --enablerepo=terra-mesa --setopt=install_weak_deps=False install \
-		-x falcond \
-		steam
-fi
+dnf -y --enablerepo=terra --enablerepo=terra-mesa --setopt=install_weak_deps=False install \
+	-x falcond \
+	steam
 dnf -y remove \
 	gamemode
 

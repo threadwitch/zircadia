@@ -1,4 +1,3 @@
-ARG BUILD_FLAVOR="${BUILD_FLAVOR:-}"
 ARG BASE_IMAGE="${BASE_IMAGE:-}"
 ARG FEDORA_VERSION="${FEDORA_VERSION:-44}"
 ARG KERNEL_FLAVOR="${KERNEL_FLAVOR:-ogc}"
@@ -13,7 +12,6 @@ COPY system_files /files
 COPY cosign.pub /files/usr/share/pki/containers/zircadia.pub
 
 FROM "${BASE_IMAGE}"
-ARG BUILD_FLAVOR="${BUILD_FLAVOR:-}"
 
 # Install kernel
 # RUN --mount=type=cache,dst=/var/cache \
@@ -64,11 +62,6 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=tmpfs,dst=/boot \
     --mount=type=cache,dst=/var/cache/libdnf5 \
     /ctx/build/05-util-install.sh
-
-RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
-    --mount=type=tmpfs,dst=/boot \
-    --network=none \
-    /ctx/build/50-nvidia.sh
 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=tmpfs,dst=/run \

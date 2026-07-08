@@ -42,7 +42,6 @@
       // Base-image digest bumps are reviewed merges, never auto-merged.
       "matchDepNames": [
         "ghcr.io/zirconium-dev/zirconium",
-        "ghcr.io/zirconium-dev/zirconium-nvidia",
       ],
       "groupName": "zirconium base image",
       "automerge": false,

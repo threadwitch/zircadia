@@ -23,10 +23,8 @@ dnf -y config-manager setopt fastestmirror=True
 #     cachyos-settings
 
 dnf -y --enablerepo=terra --enablerepo=terra-extras install \
-    terra-release-mesa \
-    terra-release-nvidia
+    terra-release-mesa
 dnf -y config-manager setopt terra-mesa.enabled=0
-dnf -y config-manager setopt terra-nvidia.enabled=0
 
 dnf -y copr enable lizardbyte/beta
 dnf -y copr disable lizardbyte/beta
