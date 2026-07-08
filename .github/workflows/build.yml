@@ -68,6 +68,13 @@ jobs:
         run: |
           /home/linuxbrew/.linuxbrew/bin/brew install podman
 
+          # Homebrew's current Podman expects a v2 registries.conf. The GitHub
+          # runner image can still ship a v1 config, which makes Brew Podman
+          # fail before it writes --digestfile. Keep this runner-local; it is
+          # not part of the built image.
+          sudo mkdir -p /etc/containers
+          printf 'unqualified-search-registries = ["docker.io"]\n' | sudo tee /etc/containers/registries.conf
+
       - name: Login to GitHub Container Registry
         if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         env:
@@ -86,18 +93,40 @@ jobs:
           PLATFORM: ${{ matrix.platform }}
           MAX_RETRIES: 3
         run: |
-          set -x
-          # HACK: push a second time so layer annotations are present
-          # TODO: remove me when https://github.com/containers/podman/issues/27796 fixed
-          for i in $(seq "${MAX_RETRIES}"); do
-            sudo /home/linuxbrew/.linuxbrew/bin/podman push --digestfile=/tmp/digestfile "localhost/${IMAGE_NAME}:${DEFAULT_TAG}" "${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}-${PLATFORM}" && break || sleep $((5 * i));
-          done
-          echo "remote_image_digest=$(< /tmp/digestfile)" | tee "${GITHUB_OUTPUT}"
+          set -xeuo pipefail
 
-          for i in $(seq "${MAX_RETRIES}"); do
-            sudo /home/linuxbrew/.linuxbrew/bin/podman push --digestfile=/tmp/digestfile "localhost/${IMAGE_NAME}:${DEFAULT_TAG}" "${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}-${PLATFORM}" && break || sleep $((5 * i));
-          done
-          echo "remote_image_digest=$(< /tmp/digestfile)" | tee "${GITHUB_OUTPUT}"
+          BREW_PODMAN="/home/linuxbrew/.linuxbrew/bin/podman"
+          DIGEST_FILE="/tmp/digestfile"
+          TARGET_IMAGE="${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}-${PLATFORM}"
+
+          push_image() {
+            rm -f "${DIGEST_FILE}"
+            for i in $(seq "${MAX_RETRIES}"); do
+              if sudo "${BREW_PODMAN}" push --digestfile="${DIGEST_FILE}" "localhost/${IMAGE_NAME}:${DEFAULT_TAG}" "${TARGET_IMAGE}"; then
+                if [ -s "${DIGEST_FILE}" ]; then
+                  return 0
+                fi
+                echo "::error::Podman push succeeded but did not write ${DIGEST_FILE}"
+                return 1
+              fi
+              sleep $((5 * i))
+            done
+            echo "::error::Podman push failed after ${MAX_RETRIES} attempts"
+            return 1
+          }
+
+          # HACK: push a second time so layer annotations are present.
+          # TODO: remove when https://github.com/containers/podman/issues/27796 is fixed in runners.
+          push_image
+          push_image
+
+          REMOTE_IMAGE_DIGEST="$(< "${DIGEST_FILE}")"
+          if [ -z "${REMOTE_IMAGE_DIGEST}" ]; then
+            echo "::error::remote_image_digest is empty after push"
+            exit 1
+          fi
+
+          echo "remote_image_digest=${REMOTE_IMAGE_DIGEST}" | tee -a "${GITHUB_OUTPUT}"
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@v4.1.1
@@ -109,7 +138,12 @@ jobs:
           REMOTE_IMAGE_DIGEST: ${{ steps.push.outputs.remote_image_digest }}
           COSIGN_EXPERIMENTAL: false
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
-        run: cosign sign -y --new-bundle-format=false --use-signing-config=false --key env://COSIGN_PRIVATE_KEY "${IMAGE_REGISTRY}/${IMAGE_NAME}@${REMOTE_IMAGE_DIGEST}"
+        run: |
+          if [ -z "${REMOTE_IMAGE_DIGEST}" ]; then
+            echo "::error::REMOTE_IMAGE_DIGEST is empty; push step did not produce a digest"
+            exit 1
+          fi
+          cosign sign -y --new-bundle-format=false --use-signing-config=false --key env://COSIGN_PRIVATE_KEY "${IMAGE_REGISTRY}/${IMAGE_NAME}@${REMOTE_IMAGE_DIGEST}"
 
       - name: Create Job Outputs
         if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
@@ -273,5 +307,10 @@ jobs:
               podman manifest push --all=false --digestfile=/tmp/digestfile "${TARGET_MANIFEST}" "${TARGET_MANIFEST}:${TAG}"
             done <<< "${TAGS}"
 
-            cosign sign -y --new-bundle-format=false --use-signing-config=false --key env://COSIGN_PRIVATE_KEY "${TARGET_MANIFEST}@$(< /tmp/digestfile)"
+            MANIFEST_DIGEST="$(< /tmp/digestfile)"
+            if [ -z "${MANIFEST_DIGEST}" ]; then
+              echo "::error::manifest push did not produce a digest for ${TARGET_MANIFEST}; refusing to sign an empty reference"
+              exit 1
+            fi
+            cosign sign -y --new-bundle-format=false --use-signing-config=false --key env://COSIGN_PRIVATE_KEY "${TARGET_MANIFEST}@${MANIFEST_DIGEST}"
           done
