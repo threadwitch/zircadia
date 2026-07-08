@@ -27,6 +27,20 @@ echo "Installing 1Password"
 mkdir -p /var/opt # -p just in case it exists
 # for some reason...
 
+# 1Password's RPM writes its GUI payload below /opt/1Password. On bootc
+# images, /opt is normally a symlink to /var/opt, while this build step mounts
+# /var as tmpfs. Make /opt a real staging directory for this RUN so the RPM
+# payload is written into the image layer, then restore the original symlink
+# after relocating the payload to /usr/lib/1Password.
+OPT_WAS_SYMLINK="false"
+OPT_SYMLINK_TARGET=""
+if [ -L /opt ]; then
+	OPT_WAS_SYMLINK="true"
+	OPT_SYMLINK_TARGET="$(readlink /opt)"
+	rm /opt
+	mkdir -p /opt
+fi
+
 # Setup repo
 cat <<EOF >/etc/yum.repos.d/1password.repo
 [1password]
@@ -48,10 +62,52 @@ dnf -y install 1password 1password-cli
 rm /etc/yum.repos.d/1password.repo -f
 
 # And then we do the hacky dance!
-mv /opt/1Password /usr/lib/1Password # move this over here
+#
+# Find the payload after install. The normal path is /opt/1Password because
+# /opt was staged as a real directory above, but keep /var/opt and /usr/lib
+# fallbacks so future base-image/package layout changes fail gracefully.
+ONEPASSWORD_SOURCE=""
+for candidate in /opt/1Password /var/opt/1Password /usr/lib/1Password; do
+	resolved="$(readlink -f "${candidate}" 2>/dev/null || true)"
+	if [ -n "${resolved}" ] && [ -d "${resolved}" ] && [ -e "${resolved}/1password" ]; then
+		ONEPASSWORD_SOURCE="${resolved}"
+		break
+	fi
+done
+
+case "${ONEPASSWORD_SOURCE}" in
+	"")
+		echo "Unable to find installed 1Password payload after RPM install." >&2
+		echo "RPM file list:" >&2
+		rpm -ql 1password >&2 || true
+		echo "Observed candidate directories:" >&2
+		find /opt /var/opt /usr/lib -maxdepth 2 -type d -name '1Password' -print >&2 || true
+		exit 1
+		;;
+	/usr/lib/1Password)
+		echo "1Password payload already installed at /usr/lib/1Password"
+		;;
+	*)
+		echo "Relocating 1Password payload from ${ONEPASSWORD_SOURCE} to /usr/lib/1Password"
+		rm -rf /usr/lib/1Password
+		mkdir -p /usr/lib
+		mv "${ONEPASSWORD_SOURCE}" /usr/lib/1Password
+		;;
+	esac
+
+if [ "${OPT_WAS_SYMLINK}" = "true" ]; then
+	rmdir /opt
+	ln -s "${OPT_SYMLINK_TARGET}" /opt
+fi
+
+if [ ! -x /usr/lib/1Password/1password ]; then
+	echo "1Password binary missing after relocation" >&2
+	find /usr/lib/1Password -maxdepth 2 -type f -print >&2 || true
+	exit 1
+fi
 
 # Create a symlink /usr/bin/1password => /usr/lib/1Password/1password
-rm /usr/bin/1password
+rm -f /usr/bin/1password
 ln -s /usr/lib/1Password/1password /usr/bin/1password
 
 #####
