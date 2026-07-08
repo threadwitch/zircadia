@@ -8,7 +8,7 @@
 
   // Keep base-image digest bumps to a reviewed weekly cadence rather than a
   // continuous stream of PRs (issue #2).
-  "schedule": ["at any time"],
+  "schedule": ["before 6am on monday"],
 
   // The zirconium base images are referenced as build-args / shell assignments
   // rather than in a place Renovate's built-in managers parse, so detect the
