@@ -13,25 +13,21 @@ GID_ONEPASSWORD="${GID_ONEPASSWORD:-1500}"
 # Must be over 1000
 GID_ONEPASSWORDCLI="${GID_ONEPASSWORDCLI:-1600}"
 
+# Must be over 1000
+GID_ONEPASSWORDMCP="${GID_ONEPASSWORDMCP:-1501}"
+
 echo "Installing 1Password"
 
-# On libostree systems, /opt is a symlink to /var/opt,
-# which actually only exists on the live system. /var is
-# a separate mutable, stateful FS that's overlaid onto
-# the ostree rootfs. Therefore we need to install it into
-# /usr/lib/1Password instead, and dynamically create a
-# symbolic link /opt/1Password => /usr/lib/1Password upon
-# boot.
-
-# Prepare staging directory
-mkdir -p /var/opt # -p just in case it exists
-# for some reason...
-
-# 1Password's RPM writes its GUI payload below /opt/1Password. On bootc
-# images, /opt is normally a symlink to /var/opt, while this build step mounts
-# /var as tmpfs. Make /opt a real staging directory for this RUN so the RPM
-# payload is written into the image layer, then restore the original symlink
-# after relocating the payload to /usr/lib/1Password.
+# Older 1Password RPMs installed the GUI payload below /opt/1Password.
+# Newer Fedora builds install it below /usr/share/1password and put helper
+# binaries in /usr/libexec. We support both layouts because the vendor package
+# layout has changed under us.
+#
+# On bootc/ostree images, /opt is normally a symlink to /var/opt, while this
+# build step mounts /var as tmpfs. If an older RPM still writes below /opt,
+# make /opt a real staging directory for this RUN so its payload is written into
+# the image layer, then restore the original symlink after relocation.
+mkdir -p /var/opt
 OPT_WAS_SYMLINK="false"
 OPT_SYMLINK_TARGET=""
 if [ -L /opt ]; then
@@ -61,37 +57,38 @@ dnf -y install 1password 1password-cli
 # Clean up the yum repo (updates are baked into new images)
 rm /etc/yum.repos.d/1password.repo -f
 
-# And then we do the hacky dance!
-#
-# Find the payload after install. The normal path is /opt/1Password because
-# /opt was staged as a real directory above, but keep /var/opt and /usr/lib
-# fallbacks so future base-image/package layout changes fail gracefully.
-ONEPASSWORD_SOURCE=""
-for candidate in /opt/1Password /var/opt/1Password /usr/lib/1Password; do
+# Find the GUI payload after install. Current 1Password RPMs on Fedora own
+# /usr/share/1password, while older vendor RPMs owned /opt/1Password.
+ONEPASSWORD_APP_DIR=""
+for candidate in /usr/share/1password /opt/1Password /var/opt/1Password /usr/lib/1Password; do
 	resolved="$(readlink -f "${candidate}" 2>/dev/null || true)"
 	if [ -n "${resolved}" ] && [ -d "${resolved}" ] && [ -e "${resolved}/1password" ]; then
-		ONEPASSWORD_SOURCE="${resolved}"
+		ONEPASSWORD_APP_DIR="${resolved}"
 		break
 	fi
 done
 
-case "${ONEPASSWORD_SOURCE}" in
+case "${ONEPASSWORD_APP_DIR}" in
 	"")
 		echo "Unable to find installed 1Password payload after RPM install." >&2
 		echo "RPM file list:" >&2
 		rpm -ql 1password >&2 || true
 		echo "Observed candidate directories:" >&2
-		find /opt /var/opt /usr/lib -maxdepth 2 -type d -name '1Password' -print >&2 || true
+		find /opt /var/opt /usr/lib /usr/share -maxdepth 2 \( -iname '1Password' -o -iname '1password' \) -print >&2 || true
 		exit 1
+		;;
+	/usr/share/1password)
+		echo "1Password payload installed at /usr/share/1password"
 		;;
 	/usr/lib/1Password)
 		echo "1Password payload already installed at /usr/lib/1Password"
 		;;
 	*)
-		echo "Relocating 1Password payload from ${ONEPASSWORD_SOURCE} to /usr/lib/1Password"
+		echo "Relocating legacy 1Password payload from ${ONEPASSWORD_APP_DIR} to /usr/lib/1Password"
 		rm -rf /usr/lib/1Password
 		mkdir -p /usr/lib
-		mv "${ONEPASSWORD_SOURCE}" /usr/lib/1Password
+		mv "${ONEPASSWORD_APP_DIR}" /usr/lib/1Password
+		ONEPASSWORD_APP_DIR="/usr/lib/1Password"
 		;;
 	esac
 
@@ -100,26 +97,27 @@ if [ "${OPT_WAS_SYMLINK}" = "true" ]; then
 	ln -s "${OPT_SYMLINK_TARGET}" /opt
 fi
 
-if [ ! -x /usr/lib/1Password/1password ]; then
-	echo "1Password binary missing after relocation" >&2
-	find /usr/lib/1Password -maxdepth 2 -type f -print >&2 || true
+if [ ! -x "${ONEPASSWORD_APP_DIR}/1password" ]; then
+	echo "1Password binary missing after payload detection" >&2
+	find "${ONEPASSWORD_APP_DIR}" -maxdepth 2 -type f -print >&2 || true
 	exit 1
 fi
 
-# Create a symlink /usr/bin/1password => /usr/lib/1Password/1password
-rm -f /usr/bin/1password
-ln -s /usr/lib/1Password/1password /usr/bin/1password
+# Older RPMs needed this symlink after relocation. Newer RPMs own a wrapper at
+# /usr/bin/1password already; do not replace it unless it is missing/broken.
+if [ ! -x /usr/bin/1password ]; then
+	ln -s "${ONEPASSWORD_APP_DIR}/1password" /usr/bin/1password
+fi
 
 #####
 # The following is a bastardization of "after-install.sh"
-# which is normally packaged with 1password. You can compare with
-# /usr/lib/1Password/after-install.sh if you want to see.
+# which is normally packaged with 1password.
 
-cd /usr/lib/1Password
+cd "${ONEPASSWORD_APP_DIR}"
 
 # chrome-sandbox requires the setuid bit to be specifically set.
 # See https://github.com/electron/electron/issues/17972
-chmod 4755 /usr/lib/1Password/chrome-sandbox
+chmod 4755 "${ONEPASSWORD_APP_DIR}/chrome-sandbox"
 
 # Normally, after-install.sh would create a group,
 # "onepassword", right about now. But if we do that during
@@ -137,20 +135,39 @@ chmod 4755 /usr/lib/1Password/chrome-sandbox
 
 # BrowserSupport binary needs setgid. This gives no extra permissions to the binary.
 # It only hardens it against environmental tampering.
-BROWSER_SUPPORT_PATH="/usr/lib/1Password/1Password-BrowserSupport"
+BROWSER_SUPPORT_PATH=""
+for candidate in /usr/libexec/1Password-BrowserSupport "${ONEPASSWORD_APP_DIR}/1Password-BrowserSupport"; do
+	if [ -x "${candidate}" ]; then
+		BROWSER_SUPPORT_PATH="${candidate}"
+		break
+	fi
+done
+if [ -z "${BROWSER_SUPPORT_PATH}" ]; then
+	echo "Unable to find 1Password BrowserSupport helper" >&2
+	rpm -ql 1password >&2 || true
+	exit 1
+fi
 
-# Add .desktop file and icons
-if [ -d /usr/share/applications ]; then
+MCP_BINARY_PATH=""
+for candidate in /usr/libexec/onepassword-mcp "${ONEPASSWORD_APP_DIR}/onepassword-mcp"; do
+	if [ -x "${candidate}" ]; then
+		MCP_BINARY_PATH="${candidate}"
+		break
+	fi
+done
+
+# Add .desktop file and icons when they are not already installed by the RPM.
+if [ -d /usr/share/applications ] && [ ! -e /usr/share/applications/1password.desktop ]; then
 	# xdg-desktop-menu will only be available if xdg-utils is installed, which is likely but not guaranteed
 	if [ -n "$(which xdg-desktop-menu)" ]; then
-		xdg-desktop-menu install --mode system --novendor /usr/lib/1Password/resources/1password.desktop
+		xdg-desktop-menu install --mode system --novendor "${ONEPASSWORD_APP_DIR}/resources/1password.desktop"
 		xdg-desktop-menu forceupdate
 	else
-		install -m0644 /usr/lib/1Password/resources/1password.desktop /usr/share/applications
+		install -m0644 "${ONEPASSWORD_APP_DIR}/resources/1password.desktop" /usr/share/applications
 	fi
 fi
-if [ -d /usr/share/icons ]; then
-	cp -rf /usr/lib/1Password/resources/icons/* /usr/share/icons/
+if [ -d /usr/share/icons ] && [ -d "${ONEPASSWORD_APP_DIR}/resources/icons" ]; then
+	cp -rn "${ONEPASSWORD_APP_DIR}/resources/icons/"* /usr/share/icons/ || true
 	# Update icon cache
 	gtk-update-icon-cache -f -t /usr/share/icons/hicolor/
 fi
@@ -158,30 +175,38 @@ fi
 chgrp "${GID_ONEPASSWORD}" "${BROWSER_SUPPORT_PATH}"
 chmod g+s "${BROWSER_SUPPORT_PATH}"
 
+if [ -n "${MCP_BINARY_PATH}" ]; then
+	chgrp "${GID_ONEPASSWORDMCP}" "${MCP_BINARY_PATH}"
+	chmod g+s "${MCP_BINARY_PATH}"
+fi
+
 # onepassword-cli also needs its own group and setgid, like the other helpers.
 chgrp "${GID_ONEPASSWORDCLI}" /usr/bin/op
 chmod g+s /usr/bin/op
 
 # Dynamically create the required groups via sysusers.d
 # and set the GID based on the files we just chgrp'd
-cat >/usr/lib/sysusers.d/onepassword.conf <<EOF
+cat >/usr/lib/sysusers.d/1password.conf <<EOF
 g onepassword ${GID_ONEPASSWORD}
+g onepassword-mcp ${GID_ONEPASSWORDMCP}
 EOF
-cat >/usr/lib/sysusers.d/onepassword-cli.conf <<EOF
+cat >/usr/lib/sysusers.d/1password-cli.conf <<EOF
 g onepassword-cli ${GID_ONEPASSWORDCLI}
 EOF
 
-# remove the sysusers.d entries created by onepassword RPMs.
-# They don't magically set the GID like we need them to.
+# Remove older rpm-ostree-generated sysusers.d entries if present.
 rm -f /usr/lib/sysusers.d/30-rpmostree-pkg-group-onepassword.conf
 rm -f /usr/lib/sysusers.d/30-rpmostree-pkg-group-onepassword-cli.conf
+rm -f /usr/lib/sysusers.d/onepassword.conf
+rm -f /usr/lib/sysusers.d/onepassword-cli.conf
 
-# Register path symlink
+# Register /opt compatibility symlink for older hard-coded integrations.
 # We do this via tmpfiles.d so that it is created by the live system.
 cat >/usr/lib/tmpfiles.d/onepassword.conf <<EOF
-L  /opt/1Password  -  -  -  -  /usr/lib/1Password
+L  /opt/1Password  -  -  -  -  ${ONEPASSWORD_APP_DIR}
 EOF
 
+mkdir -p /etc/1password
 cat >/etc/1password/custom_allowed_browsers <<EOF
 helium
 EOF
