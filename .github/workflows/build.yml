@@ -49,7 +49,7 @@ jobs:
       - name: Set base image
         run: |
           # renovate: datasource=docker depName=ghcr.io/zirconium-dev/zirconium
-          echo "BASE_IMAGE=ghcr.io/zirconium-dev/zirconium:latest@sha256:63a47ea92d654dd775321a0e62072f2f9b8892431cc4f40c09d8cc36141bd22b" >> $GITHUB_ENV
+          echo "BASE_IMAGE=ghcr.io/zirconium-dev/zirconium:latest@sha256:4ef030561d32ba6f20f6d43faea22b891762d740084d241c5c769904a2a70986" >> $GITHUB_ENV
 
       - name: Build image
         id: build
