@@ -5,7 +5,7 @@ set -xeuo pipefail
 # dnf -y --enablerepo copr:copr.fedorainfracloud.org:lizardbyte:beta install \
 # 	Sunshine
 
-dnf -y --enablerepo=terra --enablerepo=terra-mesa install \
+dnf -y --enablerepo=terra --enablerepo=terra-mesa --enablerepo=terra-extras install \
 	terra-gamescope.x86_64 \
 	terra-gamescope-libs.x86_64 \
 	terra-gamescope-libs.i686 \
