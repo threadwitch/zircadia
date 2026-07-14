@@ -106,7 +106,7 @@ fi
 # Older RPMs needed this symlink after relocation. Newer RPMs own a wrapper at
 # /usr/bin/1password already; do not replace it unless it is missing/broken.
 if [ ! -x /usr/bin/1password ]; then
-	ln -s "${ONEPASSWORD_APP_DIR}/1password" /usr/bin/1password
+	ln -sf "${ONEPASSWORD_APP_DIR}/1password" /usr/bin/1password
 fi
 
 #####

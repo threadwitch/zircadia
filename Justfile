@@ -26,6 +26,32 @@ iso $image=image:
         --use-librepo=True \
         "${image}"
 
+# `iso` pulls a published image and builds from it. `local-iso` instead builds
+# the current working tree, stages it into rootful storage (bootc-image-builder
+# runs privileged and reads root's container storage, not your rootless storage),
+# then runs BIB with --pull=never.
+# Build the installer ISO from the local working tree (no registry pull).
+local-iso:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    just build
+    just rootful localhost/zircadia:latest
+    mkdir -p output
+    sudo podman run \
+        --rm \
+        -it \
+        --privileged \
+        --pull=never \
+        --security-opt label=type:unconfined_t \
+        -v "./iso.toml:/config.toml:ro" \
+        -v ./output:/output \
+        -v /var/lib/containers/storage:/var/lib/containers/storage \
+        ghcr.io/osbuild/bootc-image-builder:latest \
+        --type iso \
+        --rootfs btrfs \
+        --use-librepo=True \
+        localhost/zircadia:latest
+
 rootful $image=image:
     #!/usr/bin/env bash
     podman image scp $USER@localhost::$image root@localhost::$image

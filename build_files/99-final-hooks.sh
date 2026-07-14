@@ -7,9 +7,19 @@ s|^NAME=.*|NAME=\"Zircadia\"|
 s|^PRETTY_NAME=.*|PRETTY_NAME=\"Zircadia\"|
 EOF
 
-dnf -y config-manager setopt terra.enabled=0
-dnf -y config-manager setopt terra-extras.enabled=0
-dnf -y config-manager setopt terra-mesa.enabled=0
+# Disable the Terra repos in the shipped repo files so bootc-image-builder's
+# depsolve does not try to verify their file:// GPG keys.
+#
+# dnf5 `config-manager setopt` only writes an override to
+# /etc/dnf/repos.override.d/, which BIB's osbuild depsolve does NOT read (it
+# reads /etc/yum.repos.d/ directly), so setopt does not stop BIB from choking on
+# Terra's file:// keys. Editing the repo files is what BIB honors. This runs
+# after all install steps, which enable Terra transiently via --enablerepo, so
+# disabling here is safe.
+sed -i 's/^enabled=1/enabled=0/' \
+	/etc/yum.repos.d/terra.repo \
+	/etc/yum.repos.d/terra-extras.repo \
+	/etc/yum.repos.d/terra-mesa.repo
 
 cp -avf "/ctx/files"/. /
 
