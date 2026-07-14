@@ -25,6 +25,8 @@ dnf -y config-manager setopt fastestmirror=True
 dnf -y --enablerepo=terra --enablerepo=terra-extras install \
     terra-release-mesa
 dnf -y config-manager setopt terra-mesa.enabled=0
+dnf -y config-manager setopt terra.enabled=0
+dnf -y config-manager setopt terra-extras.enabled=0
 
 dnf -y copr enable lizardbyte/beta
 dnf -y copr disable lizardbyte/beta

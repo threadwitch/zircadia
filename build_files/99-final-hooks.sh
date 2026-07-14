@@ -7,6 +7,10 @@ s|^NAME=.*|NAME=\"Zircadia\"|
 s|^PRETTY_NAME=.*|PRETTY_NAME=\"Zircadia\"|
 EOF
 
+dnf -y config-manager setopt terra.enabled=0
+dnf -y config-manager setopt terra-extras.enabled=0
+dnf -y config-manager setopt terra-mesa.enabled=0
+
 cp -avf "/ctx/files"/. /
 
 echo 'import "/usr/share/zirconium/just/67-gamerslop.just"' >> /usr/share/zirconium/just/00-start.just
