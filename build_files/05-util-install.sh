@@ -35,6 +35,14 @@ if rpm -q opensc >/dev/null 2>&1; then
 fi
 systemctl enable pcscd.socket
 
+# TODO: ship age-plugin-yubikey in the image, built/linked against system
+# pcsc-lite (e.g. `cargo install age-plugin-yubikey` with pcsc-lite-devel, or a
+# vendored upstream release binary). The Homebrew build links Homebrew's
+# libpcsclite, which uses a Homebrew-prefixed socket path and reports "pcscd is
+# not running" against the system pcscd. The dotfiles currently work around this
+# with PCSCLITE_CSOCK_NAME=/run/pcscd/pcscd.comm (home/dot_config/environment.d/
+# pcsclite.conf). Shipping it here, system-linked, removes that workaround.
+
 # Fonts good.
 dnf -y install \
 	google-noto-fonts-all \
