@@ -52,7 +52,17 @@ EOF
 rpmkeys --import https://downloads.1password.com/linux/keys/1password.asc
 
 # Now let's install the packages.
-dnf -y install 1password 1password-cli
+#
+# The 1Password GUI RPM %post (its bundled after-install.sh) assumes a mutable
+# FHS and runs `mkdir /usr/local` without -p. On this bootc image /usr/local is a
+# symlink to ../../var/usrlocal, so that mkdir fails with "File exists", and dnf5
+# escalates the non-critical scriptlet error into a transaction failure. We
+# reimplement the needed post-install steps below, and anything the vendor %post
+# writes under /usr/local (-> /var/usrlocal) is runtime state that would not
+# persist in the image regardless, so install the GUI package with scriptlets
+# disabled. The CLI package installs normally.
+dnf -y install 1password-cli
+dnf -y install --setopt=tsflags=noscripts 1password
 
 # Clean up the yum repo (updates are baked into new images)
 rm /etc/yum.repos.d/1password.repo -f
