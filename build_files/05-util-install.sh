@@ -23,6 +23,18 @@ dnf -y install \
 	pamu2fcfg \
 	yubikey-manager
 
+# Smartcard / PC-SC: age-plugin-yubikey and GnuPG's scdaemon need direct PC/SC
+# access to the YubiKey CCID interface. opensc's PKCS#11/CCID integration grabs
+# that interface and prevents pcscd from serving the card
+# (https://bugzilla.redhat.com/show_bug.cgi?id=1893131). Remove opensc and enable
+# the pcscd activation socket so PC/SC works out of the box. pcscd.service is
+# socket-activated (no WantedBy of its own), so enable pcscd.socket, not the
+# service.
+if rpm -q opensc >/dev/null 2>&1; then
+	dnf -y remove opensc
+fi
+systemctl enable pcscd.socket
+
 # Fonts good.
 dnf -y install \
 	google-noto-fonts-all \
