@@ -151,11 +151,26 @@ jobs:
           COSIGN_EXPERIMENTAL: false
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
         run: |
+          set -euo pipefail
+
           if [ -z "${REMOTE_IMAGE_DIGEST}" ]; then
             echo "::error::REMOTE_IMAGE_DIGEST is empty; push step did not produce a digest"
             exit 1
           fi
-          cosign sign -y --new-bundle-format=false --use-signing-config=false --key env://COSIGN_PRIVATE_KEY "${IMAGE_REGISTRY}/${IMAGE_NAME}@${REMOTE_IMAGE_DIGEST}"
+
+          IMAGE_REF="${IMAGE_REGISTRY}/${IMAGE_NAME}@${REMOTE_IMAGE_DIGEST}"
+          for attempt in 1 2 3; do
+            if cosign sign -y --new-bundle-format=false --use-signing-config=false --key env://COSIGN_PRIVATE_KEY "${IMAGE_REF}"; then
+              exit 0
+            fi
+            if [ "${attempt}" -lt 3 ]; then
+              echo "::warning::Cosign signing attempt ${attempt} failed; retrying after transient Sigstore/Rekor error"
+              sleep $((15 * attempt))
+            fi
+          done
+
+          echo "::error::Cosign signing failed after 3 attempts for ${IMAGE_REF}"
+          exit 1
 
       - name: Create Job Outputs
         if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
@@ -321,5 +336,16 @@ jobs:
               echo "::error::manifest push did not produce a digest for ${TARGET_MANIFEST}; refusing to sign an empty reference"
               exit 1
             fi
-            cosign sign -y --new-bundle-format=false --use-signing-config=false --key env://COSIGN_PRIVATE_KEY "${TARGET_MANIFEST}@${MANIFEST_DIGEST}"
+            MANIFEST_REF="${TARGET_MANIFEST}@${MANIFEST_DIGEST}"
+            for attempt in 1 2 3; do
+              if cosign sign -y --new-bundle-format=false --use-signing-config=false --key env://COSIGN_PRIVATE_KEY "${MANIFEST_REF}"; then
+                break
+              fi
+              if [ "${attempt}" -eq 3 ]; then
+                echo "::error::Cosign signing failed after 3 attempts for ${MANIFEST_REF}"
+                exit 1
+              fi
+              echo "::warning::Cosign signing attempt ${attempt} failed; retrying after transient Sigstore/Rekor error"
+              sleep $((15 * attempt))
+            done
           done
