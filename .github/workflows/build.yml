@@ -33,7 +33,7 @@ jobs:
           - platform: "amd64"
             image_name: "zircadia"
             # renovate: datasource=docker depName=ghcr.io/zirconium-dev/zirconium
-            base_image: "ghcr.io/zirconium-dev/zirconium:latest@sha256:63a47ea92d654dd775321a0e62072f2f9b8892431cc4f40c09d8cc36141bd22b"
+            base_image: "ghcr.io/zirconium-dev/zirconium:latest@sha256:4ef030561d32ba6f20f6d43faea22b891762d740084d241c5c769904a2a70986"
           - platform: "amd64"
             image_name: "zircadia-nvidia"
             # renovate: datasource=docker depName=ghcr.io/zirconium-dev/zirconium-nvidia
@@ -55,6 +55,7 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           submodules: true
+
 
       - name: Build image
         id: build
