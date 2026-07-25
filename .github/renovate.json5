@@ -25,6 +25,15 @@
       ],
       "datasourceTemplate": "docker",
     },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^build_files/05-util-install\\.sh$/",
+      ],
+      "matchStrings": [
+        "datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+(?:[a-z_]+_version)=\"(?<currentValue>[^\"]+)\"",
+      ],
+    },
   ],
 
   "packageRules": [
@@ -39,11 +48,21 @@
       "matchFileNames": [".github/workflows/**.yaml", ".github/workflows/**.yml"],
     },
     {
+      // Release assets are checksum-pinned beside their versions. Renovate can
+      // propose the version, but the matching SHA-256 must be reviewed/updated.
+      "matchDepNames": [
+        "getsops/sops",
+        "jj-vcs/jj",
+      ],
+      "automerge": false,
+    },
+    {
       // Base-image digest bumps are reviewed merges, never auto-merged.
       "matchDepNames": [
         "ghcr.io/zirconium-dev/zirconium",
+        "ghcr.io/zirconium-dev/zirconium-nvidia",
       ],
-      "groupName": "zirconium base image",
+      "groupName": "zirconium base images",
       "automerge": false,
     },
   ]

@@ -15,13 +15,12 @@ env:
   IMAGE_DESC: "Opinionated niri + bootc image with some tools I wanted, and Steam."
   IMAGE_KEYWORDS: "bootc,niri"
   IMAGE_LOGO_URL: "https://avatars.githubusercontent.com/u/255999959?s=400&v=4"
-  IMAGE_NAME: "${{ github.event.repository.name }}"
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"
   DEFAULT_TAG: "latest"
 
 jobs:
   build_push:
-    name: Build and push image
+    name: Build and push ${{ matrix.image_name }}
     permissions:
       contents: read
       packages: write
@@ -30,8 +29,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: ["amd64"]
+        include:
+          - platform: "amd64"
+            image_name: "zircadia"
+            # renovate: datasource=docker depName=ghcr.io/zirconium-dev/zirconium
+            base_image: "ghcr.io/zirconium-dev/zirconium:latest@sha256:63a47ea92d654dd775321a0e62072f2f9b8892431cc4f40c09d8cc36141bd22b"
+          - platform: "amd64"
+            image_name: "zircadia-nvidia"
+            # renovate: datasource=docker depName=ghcr.io/zirconium-dev/zirconium-nvidia
+            base_image: "ghcr.io/zirconium-dev/zirconium-nvidia:latest@sha256:4fea0f50eb854deb11e99a161bb182bfd5a53c5ecf8199540d401fbb69465c43"
     runs-on: ${{ matrix.platform == 'amd64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
+    env:
+      BASE_IMAGE: ${{ matrix.base_image }}
+      IMAGE_NAME: ${{ matrix.image_name }}
     steps:
       - name: Mount BTRFS for podman storage
         if: ${{ matrix.platform != 'arm64' }}
@@ -46,16 +56,14 @@ jobs:
         with:
           submodules: true
 
-      - name: Set base image
-        run: |
-          # renovate: datasource=docker depName=ghcr.io/zirconium-dev/zirconium
-          echo "BASE_IMAGE=ghcr.io/zirconium-dev/zirconium:latest@sha256:63a47ea92d654dd775321a0e62072f2f9b8892431cc4f40c09d8cc36141bd22b" >> $GITHUB_ENV
-
       - name: Build image
         id: build
         env:
           BASE_IMAGE: ${{ env.BASE_IMAGE }}
-        run: sudo podman build "--build-arg=BASE_IMAGE=${BASE_IMAGE}" -t "${IMAGE_NAME}:${DEFAULT_TAG}" -f ./Containerfile .
+        # RUN bind mounts from the ctx stage are not reliably included in older
+        # Podman/Buildah cache keys. Disable layer reuse so build_files changes
+        # cannot silently produce a stale image.
+        run: sudo podman build --no-cache "--build-arg=BASE_IMAGE=${BASE_IMAGE}" -t "${IMAGE_NAME}:${DEFAULT_TAG}" -f ./Containerfile .
 
       - name: Rechunk Image
         run: sudo podman run --rm --privileged -v /var/lib/containers:/var/lib/containers --entrypoint /usr/libexec/bootc-base-imagectl quay.io/centos-bootc/centos-bootc:stream10 rechunk --max-layers 67 "localhost/${IMAGE_NAME}:${DEFAULT_TAG}" "localhost/${IMAGE_NAME}:${DEFAULT_TAG}"
@@ -157,7 +165,8 @@ jobs:
         run: |
           set -x
           mkdir -p /tmp/outputs/digests
-          echo "${DIGEST}" | tee "/tmp/outputs/digests/${IMAGE_NAME}-${PLATFORM}.txt"
+          printf '%s,%s,%s\n' "${PLATFORM}" "${IMAGE_NAME}" "${DIGEST}" |
+            tee "/tmp/outputs/digests/${IMAGE_NAME}-${PLATFORM}.csv"
 
       - name: Upload Output Artifacts
         if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
@@ -167,7 +176,7 @@ jobs:
           retention-days: 1
           if-no-files-found: error
           path: |
-            /tmp/outputs/digests/*.txt
+            /tmp/outputs/digests/*.csv
 
   manifest:
     name: Create Manifest
@@ -227,13 +236,13 @@ jobs:
             io.artifacthub.package.license=Apache-2.0
             io.artifacthub.package.logo-url=${{ env.IMAGE_LOGO_URL }}
             io.artifacthub.package.prerelease=false
-            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/${{ github.sha }}/README.md
+            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/README.md
             org.opencontainers.image.created=${{ steps.date.outputs.date }}
             org.opencontainers.image.description=${{ env.IMAGE_DESC }}
-            org.opencontainers.image.documentation=https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/${{ github.sha }}/README.md
-            org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/blob/${{ github.sha }}/Containerfile
-            org.opencontainers.image.title=${{ env.IMAGE_NAME }}
-            org.opencontainers.image.url=https://github.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/tree/${{ github.sha }}
+            org.opencontainers.image.documentation=https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/README.md
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}/blob/${{ github.sha }}/Containerfile
+            org.opencontainers.image.title=${{ github.event.repository.name }}
+            org.opencontainers.image.url=https://github.com/${{ github.repository }}/tree/${{ github.sha }}
             org.opencontainers.image.vendor=${{ github.repository_owner }}
             org.opencontainers.image.version=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
 
@@ -241,7 +250,7 @@ jobs:
         if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          pattern: ${{ env.IMAGE_NAME }}-*
+          pattern: ${{ github.event.repository.name }}-*
           merge-multiple: true
           path: /tmp/artifacts
 
@@ -252,12 +261,8 @@ jobs:
         run: |
           set -x
           OUTCSV="$(mktemp)"
-          for digest_file in /tmp/artifacts/*.txt; do
-            # Extract the platform from the file name
-            PLATFORM="$(basename "${digest_file}" ".txt" | sed 's/.*-//g')"
-            IMAGE_NAME="$(basename "${digest_file}" ".txt" | grep -Po ".*-" | sed 's/-$//')"
-            DIGEST="$(< "${digest_file}")"
-            echo "${PLATFORM},${IMAGE_NAME},${DIGEST}" | tee -a "${OUTCSV}"
+          for build_output in /tmp/artifacts/*.csv; do
+            cat "${build_output}" >> "${OUTCSV}"
           done
           echo "OUTPUT_CSV=$(base32 -w 0 < "${OUTCSV}")" | tee -a "${GITHUB_OUTPUT}"
 

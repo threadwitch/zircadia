@@ -35,13 +35,51 @@ if rpm -q opensc >/dev/null 2>&1; then
 fi
 systemctl enable pcscd.socket
 
-# TODO: ship age-plugin-yubikey in the image, built/linked against system
-# pcsc-lite (e.g. `cargo install age-plugin-yubikey` with pcsc-lite-devel, or a
-# vendored upstream release binary). The Homebrew build links Homebrew's
-# libpcsclite, which uses a Homebrew-prefixed socket path and reports "pcscd is
-# not running" against the system pcscd. The dotfiles currently work around this
-# with PCSCLITE_CSOCK_NAME=/run/pcscd/pcscd.comm (home/dot_config/environment.d/
-# pcsclite.conf). Shipping it here, system-linked, removes that workaround.
+# Bootstrap tools available from Fedora. Keep age and Nushell as RPMs so they
+# receive normal image rebuild updates.
+dnf -y install \
+	age \
+	nushell
+
+# age-plugin-yubikey is not packaged for Fedora 44. Build the pinned crate
+# against Fedora's system pcsc-lite, then remove the toolchain; unlike the
+# Homebrew bottle, this resolves /run/pcscd/pcscd.comm without an environment
+# override.
+dnf -y install cargo pcsc-lite-devel
+# renovate: datasource=crate depName=age-plugin-yubikey
+age_plugin_yubikey_version="0.5.1"
+export CARGO_HOME=/tmp/cargo-home
+cargo install \
+	--locked \
+	--root /tmp/age-plugin-yubikey \
+	--version "${age_plugin_yubikey_version}" \
+	age-plugin-yubikey
+install -m 0755 \
+	/tmp/age-plugin-yubikey/bin/age-plugin-yubikey \
+	/usr/bin/age-plugin-yubikey
+dnf -y remove cargo pcsc-lite-devel
+rm -rf /tmp/age-plugin-yubikey "${CARGO_HOME}"
+
+# sops and jj are not packaged for Fedora 44. Install pinned upstream release
+# artifacts only after checking their published SHA-256 digests.
+# renovate: datasource=github-releases depName=getsops/sops
+sops_version="3.13.3"
+sops_url="https://github.com/getsops/sops/releases/download/v${sops_version}/sops-${sops_version}-1.x86_64.rpm"
+sops_sha256="f362eabc5b17b84894952fc57737eccf26ef8a4321453c165f4b1205b5544123"
+curl -fsSL "${sops_url}" -o /tmp/sops.rpm
+printf '%s  %s\n' "${sops_sha256}" /tmp/sops.rpm | sha256sum --check --strict
+dnf -y install /tmp/sops.rpm
+rm -f /tmp/sops.rpm
+
+# renovate: datasource=github-releases depName=jj-vcs/jj
+jj_version="0.43.0"
+jj_url="https://github.com/jj-vcs/jj/releases/download/v${jj_version}/jj-v${jj_version}-x86_64-unknown-linux-musl.tar.gz"
+jj_sha256="59e5588583ac82b623239929368c65b90735931c0f26b5a16c1f04d5bb97643d"
+curl -fsSL "${jj_url}" -o /tmp/jj.tar.gz
+printf '%s  %s\n' "${jj_sha256}" /tmp/jj.tar.gz | sha256sum --check --strict
+tar -xzf /tmp/jj.tar.gz -C /tmp
+install -m 0755 /tmp/jj /usr/bin/jj
+rm -f /tmp/jj /tmp/jj.tar.gz
 
 # Fonts good.
 dnf -y install \
