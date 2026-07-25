@@ -22,6 +22,21 @@ dnf -y config-manager setopt fastestmirror=True
 #     zram-generator-defaults \
 #     cachyos-settings
 
+# Some bases (e.g. zirconium-nvidia) ship only Fedora repos, so the Terra
+# repos we --enablerepo below are not merely disabled, they are undefined,
+# and dnf5 hard-errors "No matching repositories". The plain zirconium base
+# already carries the terra-release* RPMs (and thus the repo files), so this
+# bootstrap only runs where Terra is genuinely missing. Once terra-release*
+# is installed it lays down terra.repo/terra-extras.repo/terra-mesa.repo,
+# which 99-final-hooks.sh disables in the shipped image.
+repo_list="$(dnf -q repolist --all)"
+if ! grep -qE '^terra[[:space:]]' <<<"${repo_list}" ||
+    ! grep -qE '^terra-extras[[:space:]]' <<<"${repo_list}"; then
+    dnf -y config-manager addrepo \
+        --from-repofile=https://raw.githubusercontent.com/terrapkg/subatomic-repos/main/terra.repo
+    dnf -y --enablerepo=terra install terra-release terra-release-extras
+fi
+
 dnf -y --enablerepo=terra --enablerepo=terra-extras install \
     terra-release-mesa
 dnf -y config-manager setopt terra-mesa.enabled=0
