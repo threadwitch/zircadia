@@ -35,11 +35,30 @@ if rpm -q opensc >/dev/null 2>&1; then
 fi
 systemctl enable pcscd.socket
 
-# Bootstrap tools available from Fedora. Keep age and Nushell as RPMs so they
-# receive normal image rebuild updates.
-dnf -y install \
-	age \
-	nushell
+# Bootstrap tools available from Fedora. Keep age from Fedora.
+dnf -y install age
+
+# Nushell from Gemfury: Fedora/Terra lag upstream (Fedora ships 0.99.x; upstream
+# is 0.114.x). Gemfury tracks upstream. Pin to the latest version for a
+# deliberate, reproducible install rather than accepting a moving target.
+# NOTE: Gemfury RPMs are unsigned, so gpgcheck=0 is required (see repo file).
+# renovate: datasource=github-releases depName=nushell/nushell
+cat > /etc/yum.repos.d/fury-nushell.repo <<'EOF'
+[gemfury-nushell]
+name=Gemfury Nushell Repo
+baseurl=https://yum.fury.io/nushell/
+enabled=1
+gpgcheck=0
+gpgkey=https://yum.fury.io/nushell/gpg.key
+EOF
+# The Gemfury RPM %post runs `mkdir -p "$HOME/.config"`. On this bootc image
+# $HOME=/root is a symlink to /var/roothome, which already exists, so mkdir
+# errors and dnf5 escalates the non-critical scriptlet failure into a
+# transaction failure (same class as 1Password, commit 7fcfa77). The scriptlet
+# only runs post-install.nu to register plugins into the user's config dir,
+# which is live-state that belongs to the running system, not the image.
+# Install with scriptlets disabled; plugins register on first login.
+dnf -y install --setopt=tsflags=noscripts nushell-0.114.1
 
 # age-plugin-yubikey is not packaged for Fedora 44. Build the pinned crate
 # against Fedora's system pcsc-lite, then remove the toolchain; unlike the
@@ -84,15 +103,12 @@ printf '%s  %s\n' "${sops_sha256}" /tmp/sops.rpm | sha256sum --check --strict
 dnf -y install /tmp/sops.rpm
 rm -f /tmp/sops.rpm
 
+# jj from the jj-vcs COPR (GPG-signed) tracks upstream (Fedora/Terra lag).
+# Pin to the latest upstream version for a deliberate, reproducible install.
+# Disable weak deps to avoid pulling editor/pager extras (bat, 7zip, unzip).
 # renovate: datasource=github-releases depName=jj-vcs/jj
-jj_version="0.43.0"
-jj_url="https://github.com/jj-vcs/jj/releases/download/v${jj_version}/jj-v${jj_version}-x86_64-unknown-linux-musl.tar.gz"
-jj_sha256="59e5588583ac82b623239929368c65b90735931c0f26b5a16c1f04d5bb97643d"
-curl -fsSL "${jj_url}" -o /tmp/jj.tar.gz
-printf '%s  %s\n' "${jj_sha256}" /tmp/jj.tar.gz | sha256sum --check --strict
-tar -xzf /tmp/jj.tar.gz -C /tmp
-install -m 0755 /tmp/jj /usr/bin/jj
-rm -f /tmp/jj /tmp/jj.tar.gz
+dnf -y copr enable aldantanneo/jj-vcs
+dnf -y --setopt=install_weak_deps=False install jj-cli-0.43.0
 
 # Fonts good.
 dnf -y install \
