@@ -75,6 +75,12 @@ jobs:
       - name: Install Podman from Brew
         if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         run: |
+          # GitHub runner images can carry a Homebrew checkout older than the
+          # current bottle metadata. That mismatch made dbus' newer `run`
+          # install step unreadable by the stale installer. Synchronize the
+          # installer and formula metadata before installing the newer Podman
+          # used for annotated pushes.
+          /home/linuxbrew/.linuxbrew/bin/brew update
           /home/linuxbrew/.linuxbrew/bin/brew install podman
 
           # Homebrew's current Podman expects a v2 registries.conf. The GitHub

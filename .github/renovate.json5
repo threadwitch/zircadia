@@ -51,6 +51,7 @@
       // Release assets are checksum-pinned beside their versions. Renovate can
       // propose the version, but the matching SHA-256 must be reviewed/updated.
       "matchDepNames": [
+        "Foxboron/age-plugin-tpm",
         "getsops/sops",
         "jj-vcs/jj",
       ],

@@ -60,6 +60,19 @@ install -m 0755 \
 dnf -y remove cargo pcsc-lite-devel
 rm -rf /tmp/age-plugin-yubikey "${CARGO_HOME}"
 
+# age-plugin-tpm is not packaged for Fedora 44. Its upstream release is a
+# statically linked binary, so install the pinned, checksummed release artifact
+# without adding a runtime dependency or leaving a Go toolchain in the image.
+# renovate: datasource=github-releases depName=Foxboron/age-plugin-tpm
+age_plugin_tpm_version="1.0.1"
+age_plugin_tpm_url="https://github.com/Foxboron/age-plugin-tpm/releases/download/v${age_plugin_tpm_version}/age-plugin-tpm-v${age_plugin_tpm_version}-linux-amd64.tar.gz"
+age_plugin_tpm_sha256="ba5930cef12998e1bf5e979bcbb45e4e4cefdac773144b57f7e9e391c8c7e3fe"
+curl -fsSL "${age_plugin_tpm_url}" -o /tmp/age-plugin-tpm.tar.gz
+printf '%s  %s\n' "${age_plugin_tpm_sha256}" /tmp/age-plugin-tpm.tar.gz | sha256sum --check --strict
+tar -xzf /tmp/age-plugin-tpm.tar.gz -C /tmp
+install -m 0755 /tmp/age-plugin-tpm/age-plugin-tpm /usr/bin/age-plugin-tpm
+rm -rf /tmp/age-plugin-tpm /tmp/age-plugin-tpm.tar.gz
+
 # sops and jj are not packaged for Fedora 44. Install pinned upstream release
 # artifacts only after checking their published SHA-256 digests.
 # renovate: datasource=github-releases depName=getsops/sops
