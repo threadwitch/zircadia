@@ -16,6 +16,11 @@ dnf -y --enablerepo=terra install \
 # Apparently this should help with printing issues?
 dnf -y install system-config-printer system-config-printer-applet
 
+# Use iwd as the NetworkManager WiFi backend. It handles Intel AX2xx/AX3xx
+# and mixed WPA2/WPA3 networks more reliably than wpa_supplicant on some
+# consumer routers (e.g., ThinkPad X1 Carbon Gen 11).
+dnf -y install iwd
+
 # YubiKey Stuff
 dnf -y install \
 	pam-u2f \

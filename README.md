@@ -45,9 +45,14 @@ ISO's kickstart rebases a fresh install onto `ghcr.io/threadwitch/zircadia:lates
 zjust update
 ```
 
-This upgrades the base image (`bootc upgrade`), updates Flatpaks, and — if
-Homebrew is installed — runs `brew update && brew upgrade`. Reboot to boot the
-upgraded image.
+This upgrades the base image (`bootc upgrade`). Reboot to boot the upgraded
+image.
+
+To also update Flatpaks and Homebrew packages:
+
+```bash
+zjust update-all
+```
 
 ## Verify the image signature
 

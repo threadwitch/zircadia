@@ -4,7 +4,7 @@ change-scheduler:
  scxctl switch --sched "$(gum choose $(scxctl list | grep -Po "\\[.*\\]" | jq -rc ".[]"))"
 
 # Update the base image, Flatpaks, and Homebrew packages
-update:
+update-all:
  #!/usr/bin/env bash
  set -euo pipefail
  sudo bootc upgrade

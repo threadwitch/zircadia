@@ -7,9 +7,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- Switch NetworkManager WiFi backend to iwd for better reliability on Intel AX2xx/AX3xx and mixed WPA2/WPA3 networks
+- `zjust update-all` recipe to upgrade the base image, Flatpaks, and Homebrew together
 
 ### Fixed
-- zjust update recipe missing — no way to trigger a system update via zjust (#7)
+- Rename duplicate `zjust update` recipe to `update-all` so just no longer fails to load recipes
 - faugus-launcher installed twice; flatpak preinstall file silently ignored (#4)
 - Fix iso.toml kickstart: rebases installs to upstream zirconium instead of zircadia (#1)
 
