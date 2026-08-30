@@ -5,11 +5,11 @@ filesystem := env("BUILD_FILESYSTEM", "ext4")
 # Base images are pinned by digest and kept current by Renovate (.github/renovate.json5).
 build:
     # renovate: datasource=docker depName=ghcr.io/zirconium-dev/zirconium
-    podman build --no-cache -t zircadia:latest --build-arg BASE_IMAGE=ghcr.io/zirconium-dev/zirconium:latest@sha256:8a170c363041235122c8eea8a364fe0397a1ea0bbcd83b1fe29cc644d7208ee4 .
+    podman build --no-cache -t zircadia:latest --build-arg BASE_IMAGE=ghcr.io/zirconium-dev/zirconium:latest@sha256:bb79ea40ccb9f6bd99376de2b2dcbf2ae9563bec711c293349ed49265500fb6a .
 
 build-nvidia:
     # renovate: datasource=docker depName=ghcr.io/zirconium-dev/zirconium-nvidia
-    podman build --no-cache -t zircadia-nvidia:latest --build-arg BASE_IMAGE=ghcr.io/zirconium-dev/zirconium-nvidia:latest@sha256:9600f668d0e8406de9f06f9e294103e7cc0f4aaa8aa63322a0b7a7e3be1516af .
+    podman build --no-cache -t zircadia-nvidia:latest --build-arg BASE_IMAGE=ghcr.io/zirconium-dev/zirconium-nvidia:latest@sha256:6f37bb86cf2ed8079c350f967b8bfd4c3e3c9a6c5b901997032395ea5f4e97e5 .
 
 iso $image=image:
     #!/usr/bin/env bash
