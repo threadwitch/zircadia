@@ -6,7 +6,6 @@ set -xeuo pipefail
 # across all build steps. It is intentionally left enabled for the rest of the
 # build; the cache mount is not part of the shipped image.
 dnf -y config-manager setopt keepcache=1
-dnf -y config-manager setopt fastestmirror=True
 
 # dnf -y copr enable bieszczaders/kernel-cachyos
 # dnf -y copr disable bieszczaders/kernel-cachyos

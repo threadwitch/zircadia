@@ -55,6 +55,14 @@ dnf -y --setopt=install_weak_deps=False install \
 	waydroid \
 	vulkan-tools
 
+# Steam pulls NSS's 32-bit libraries. Upgrade the native package first, then
+# install the exact same build for i686; otherwise a stale base and current
+# Fedora Updates can own the same architecture-independent man pages at
+# different versions and fail the RPM transaction.
+dnf -y upgrade nss.x86_64
+nss_version="$(rpm -q --qf '%{VERSION}-%{RELEASE}' nss.x86_64)"
+dnf -y install "nss-${nss_version}.i686"
+
 dnf -y --enablerepo=terra --enablerepo=terra-mesa --setopt=install_weak_deps=False install \
 	-x falcond \
 	steam
