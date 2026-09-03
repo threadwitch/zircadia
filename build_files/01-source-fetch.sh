@@ -27,8 +27,8 @@ dnf -y config-manager setopt fastestmirror=True
 # and dnf5 hard-errors "No matching repositories". The plain zirconium base
 # already carries the terra-release* RPMs (and thus the repo files), so this
 # bootstrap only runs where Terra is genuinely missing. Once terra-release*
-# is installed it lays down terra.repo/terra-extras.repo/terra-mesa.repo,
-# which 99-final-hooks.sh disables in the shipped image.
+# is installed it lays down the Terra repo files, which 99-final-hooks.sh
+# disables in the shipped image.
 repo_list="$(dnf -q repolist --all)"
 if ! grep -qE '^terra[[:space:]]' <<<"${repo_list}" ||
     ! grep -qE '^terra-extras[[:space:]]' <<<"${repo_list}"; then
@@ -38,8 +38,10 @@ if ! grep -qE '^terra[[:space:]]' <<<"${repo_list}" ||
 fi
 
 dnf -y --enablerepo=terra --enablerepo=terra-extras install \
-    terra-release-mesa
+	terra-release-mesa \
+	terra-release-multimedia
 dnf -y config-manager setopt terra-mesa.enabled=0
+dnf -y config-manager setopt terra-multimedia.enabled=0
 dnf -y config-manager setopt terra.enabled=0
 dnf -y config-manager setopt terra-extras.enabled=0
 

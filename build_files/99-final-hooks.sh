@@ -19,7 +19,8 @@ EOF
 sed -i 's/^enabled=1/enabled=0/' \
 	/etc/yum.repos.d/terra.repo \
 	/etc/yum.repos.d/terra-extras.repo \
-	/etc/yum.repos.d/terra-mesa.repo
+	/etc/yum.repos.d/terra-mesa.repo \
+	/etc/yum.repos.d/terra-multimedia.repo
 
 cp -avf "/ctx/files"/. /
 

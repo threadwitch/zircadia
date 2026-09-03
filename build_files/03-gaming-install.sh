@@ -5,6 +5,28 @@ set -xeuo pipefail
 # dnf -y --enablerepo copr:copr.fedorainfracloud.org:lizardbyte:beta install \
 # 	Sunshine
 
+# The full FDK AAC codec is in Terra Multimedia. Steam pulls a 32-bit media
+# stack, so install the same pinned Terra build for both architectures before
+# dependency solving can select Fedora's feature-reduced fdk-aac-free instead.
+# Terra's RPM currently provides but does not conflict with fdk-aac-free; swap
+# either architecture explicitly when an updated base happens to ship it.
+fdk_aac_version="2.0.3-1.fc44"
+for arch in x86_64 i686; do
+	if rpm -q "fdk-aac-free.${arch}" >/dev/null 2>&1; then
+		dnf -y --enablerepo=terra-multimedia swap \
+			"fdk-aac-free.${arch}" \
+			"fdk-aac-${fdk_aac_version}.${arch}"
+	fi
+done
+dnf -y --enablerepo=terra-multimedia install \
+	"fdk-aac-${fdk_aac_version}.x86_64" \
+	"fdk-aac-${fdk_aac_version}.i686"
+dnf versionlock add fdk-aac.x86_64 fdk-aac.i686
+
+# Pinning fdk-aac does not hide the differently named Fedora alternative.
+# Keep later transactions on the selected codec family.
+dnf -y config-manager setopt exclude=fdk-aac-free
+
 dnf -y --enablerepo=terra --enablerepo=terra-mesa --enablerepo=terra-extras install \
 	terra-gamescope.x86_64 \
 	terra-gamescope-libs.x86_64 \
