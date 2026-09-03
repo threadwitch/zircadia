@@ -113,7 +113,7 @@ rm -f /tmp/sops.rpm
 # Disable weak deps to avoid pulling editor/pager extras (bat, 7zip, unzip).
 # renovate: datasource=github-releases depName=jj-vcs/jj
 dnf -y copr enable aldantanneo/jj-vcs
-dnf -y --setopt=install_weak_deps=False install jj-cli-0.43.0
+dnf -y --setopt=install_weak_deps=False install jj-cli-0.44.0
 
 # Fonts good.
 dnf -y install \
