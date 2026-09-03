@@ -21,13 +21,11 @@ dnf -y config-manager setopt keepcache=1
 #     zram-generator-defaults \
 #     cachyos-settings
 
-# Some bases (e.g. zirconium-nvidia) ship only Fedora repos, so the Terra
-# repos we --enablerepo below are not merely disabled, they are undefined,
-# and dnf5 hard-errors "No matching repositories". The plain zirconium base
-# already carries the terra-release* RPMs (and thus the repo files), so this
-# bootstrap only runs where Terra is genuinely missing. Once terra-release*
-# is installed it lays down the Terra repo files, which 99-final-hooks.sh
-# disables in the shipped image.
+# A base may ship only Fedora repos, so the Terra repos we --enablerepo below
+# can be undefined rather than merely disabled, causing dnf5 to hard-error
+# with "No matching repositories". This bootstrap only runs where Terra is
+# genuinely missing. Once terra-release* is installed it lays down the Terra
+# repo files, which 99-final-hooks.sh disables in the shipped image.
 repo_list="$(dnf -q repolist --all)"
 if ! grep -qE '^terra[[:space:]]' <<<"${repo_list}" ||
     ! grep -qE '^terra-extras[[:space:]]' <<<"${repo_list}"; then

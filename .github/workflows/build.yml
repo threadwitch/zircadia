@@ -34,10 +34,6 @@ jobs:
             image_name: "zircadia"
             # renovate: datasource=docker depName=ghcr.io/zirconium-dev/zirconium
             base_image: "ghcr.io/zirconium-dev/zirconium:latest@sha256:bb79ea40ccb9f6bd99376de2b2dcbf2ae9563bec711c293349ed49265500fb6a"
-          - platform: "amd64"
-            image_name: "zircadia-nvidia"
-            # renovate: datasource=docker depName=ghcr.io/zirconium-dev/zirconium-nvidia
-            base_image: "ghcr.io/zirconium-dev/zirconium-nvidia:latest@sha256:6f37bb86cf2ed8079c350f967b8bfd4c3e3c9a6c5b901997032395ea5f4e97e5"
     runs-on: ${{ matrix.platform == 'amd64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
     env:
       BASE_IMAGE: ${{ matrix.base_image }}
@@ -56,6 +52,19 @@ jobs:
         with:
           submodules: true
 
+      # Ubuntu 24.04's stock Podman is too old for reliable Fedora 44 bootc
+      # builds. In particular, RPM transactions can lose sight of file
+      # providers from the base layer (such as /usr/bin/sh). Use the current
+      # Homebrew build for every container operation below.
+      - name: Install current Podman
+        run: |
+          /home/linuxbrew/.linuxbrew/bin/brew update
+          /home/linuxbrew/.linuxbrew/bin/brew install podman
+
+          # Homebrew's current Podman expects a v2 registries.conf. The GitHub
+          # runner image can still ship a v1 config.
+          sudo mkdir -p /etc/containers
+          printf 'unqualified-search-registries = ["docker.io"]\n' | sudo tee /etc/containers/registries.conf
 
       - name: Build image
         id: build
@@ -64,31 +73,10 @@ jobs:
         # RUN bind mounts from the ctx stage are not reliably included in older
         # Podman/Buildah cache keys. Disable layer reuse so build_files changes
         # cannot silently produce a stale image.
-        run: sudo podman build --no-cache "--build-arg=BASE_IMAGE=${BASE_IMAGE}" -t "${IMAGE_NAME}:${DEFAULT_TAG}" -f ./Containerfile .
+        run: sudo /home/linuxbrew/.linuxbrew/bin/podman build --no-cache "--build-arg=BASE_IMAGE=${BASE_IMAGE}" -t "${IMAGE_NAME}:${DEFAULT_TAG}" -f ./Containerfile .
 
       - name: Rechunk Image
-        run: sudo podman run --rm --privileged -v /var/lib/containers:/var/lib/containers --entrypoint /usr/libexec/bootc-base-imagectl quay.io/centos-bootc/centos-bootc:stream10 rechunk --max-layers 67 "localhost/${IMAGE_NAME}:${DEFAULT_TAG}" "localhost/${IMAGE_NAME}:${DEFAULT_TAG}"
-
-      # TODO: remove me when we have a new podman in 26.04 runners
-      # needed because old podman doesn't push layer annotations for
-      # the rpm-ostree rechunker at all
-      - name: Install Podman from Brew
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-        run: |
-          # GitHub runner images can carry a Homebrew checkout older than the
-          # current bottle metadata. That mismatch made dbus' newer `run`
-          # install step unreadable by the stale installer. Synchronize the
-          # installer and formula metadata before installing the newer Podman
-          # used for annotated pushes.
-          /home/linuxbrew/.linuxbrew/bin/brew update
-          /home/linuxbrew/.linuxbrew/bin/brew install podman
-
-          # Homebrew's current Podman expects a v2 registries.conf. The GitHub
-          # runner image can still ship a v1 config, which makes Brew Podman
-          # fail before it writes --digestfile. Keep this runner-local; it is
-          # not part of the built image.
-          sudo mkdir -p /etc/containers
-          printf 'unqualified-search-registries = ["docker.io"]\n' | sudo tee /etc/containers/registries.conf
+        run: sudo /home/linuxbrew/.linuxbrew/bin/podman run --rm --privileged -v /var/lib/containers:/var/lib/containers --entrypoint /usr/libexec/bootc-base-imagectl quay.io/centos-bootc/centos-bootc:stream10 rechunk --max-layers 67 "localhost/${IMAGE_NAME}:${DEFAULT_TAG}" "localhost/${IMAGE_NAME}:${DEFAULT_TAG}"
 
       - name: Login to GitHub Container Registry
         if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
@@ -96,7 +84,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LOGIN_USER: ${{ github.actor }}
         run: |
-          echo "${GITHUB_TOKEN}" | sudo podman login -u "${LOGIN_USER}" --password-stdin "ghcr.io"
+          echo "${GITHUB_TOKEN}" | sudo /home/linuxbrew/.linuxbrew/bin/podman login -u "${LOGIN_USER}" --password-stdin "ghcr.io"
           echo "${GITHUB_TOKEN}" | docker login -u "${LOGIN_USER}" --password-stdin "ghcr.io" # For cosign
 
       - name: Push to GHCR
