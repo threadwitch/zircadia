@@ -49,10 +49,11 @@ class MaintenanceConfigurationTests(unittest.TestCase):
         config_line = next(line for line in DISK_WORKFLOW.splitlines()
                            if "config-file:" in line)
         paths = re.findall(r"'([^']+\.toml)'", config_line)
-        self.assertEqual(set(paths), {"iso.toml", "disk_config/disk.toml"})
+        # Podman requires ./ or / to distinguish bind mounts from named volumes.
+        self.assertEqual(set(paths), {"./iso.toml", "./disk_config/disk.toml"})
         for path in paths:
             self.assertTrue((ROOT / path).is_file(), path)
-            self.assertIn(f"      - '{path}'", DISK_WORKFLOW)
+            self.assertIn(f"      - '{path.removeprefix('./')}'", DISK_WORKFLOW)
         self.assertIn("      - '.github/workflows/build-disk.yml'", DISK_WORKFLOW)
 
     def test_installer_always_uses_published_architecture(self):
