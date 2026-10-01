@@ -47,13 +47,8 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache/libdnf5 \
     /ctx/build/03-gaming-install.sh
 
-RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
-    --mount=type=tmpfs,dst=/var \
-    --mount=type=tmpfs,dst=/tmp \
-    --mount=type=tmpfs,dst=/run \
-    --mount=type=tmpfs,dst=/boot \
-    --mount=type=cache,dst=/var/cache/libdnf5 \
-    /ctx/build/04-1p-install.sh
+# 1Password is no longer included. Keep 04-1p-install.sh for reference, but
+# do not run its package install or dedicated browser/sysusers/tmpfiles setup.
 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=tmpfs,dst=/var \

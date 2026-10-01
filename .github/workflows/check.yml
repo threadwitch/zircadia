@@ -1,0 +1,26 @@
+---
+name: Maintenance checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Check shell syntax
+        run: |
+          for script in build_files/*.sh; do
+            bash -n "${script}"
+          done
+      - name: Run maintenance regression tests
+        run: python3 -m unittest discover -s tests -v

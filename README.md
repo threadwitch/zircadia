@@ -2,7 +2,7 @@
 
 An opinionated, signed [bootc](https://github.com/bootc-dev/bootc) desktop image:
 a [niri](https://github.com/YaLTeR/niri) Wayland system with a gaming stack,
-1Password, a curated set of CLI tools and fonts, and YubiKey support.
+a curated set of CLI tools and fonts, and YubiKey support.
 
 Zircadia is a thin customization layer built on top of
 [zirconium](https://github.com/zirconium-dev) (Fedora + niri), published as an
@@ -15,14 +15,14 @@ OCI image to GHCR and delivered with bootc.
 
 - **Gaming:** Steam, gamescope, MangoHud, vkBasalt, umu-launcher, faugus-launcher
   (Flatpak), ScopeBuddy, scx schedulers, InputPlumber, Waydroid, and related bits.
-- **1Password:** desktop app + CLI, integrated for an ostree/bootc system
-  (installed under `/usr/lib`, `/opt` symlink created at boot via tmpfiles.d,
-  groups provisioned via sysusers.d). Helium is registered as an allowed browser.
 - **CLI tools:** yazi, ripgrep, fd, fzf, zoxide, 7zip, ImageMagick, poppler,
   helium-browser.
 - **Fonts:** Noto, Roboto, Atkinson Hyperlegible, several Nerd Fonts, and more.
 - **Security:** YubiKey/U2F (pam-u2f, pam_yubico, yubikey-manager).
 - **Branding:** os-release identifies the system as Zircadia.
+
+The 1Password recipe is retained for reference but disabled; its packages and
+dedicated integrations are no longer added to the image.
 
 Removed from the base: Firefox, valent, fedora-chromium-config, gamemode.
 
@@ -71,6 +71,18 @@ Requires `just` and `podman`.
 just build          # build zircadia:latest
 just iso            # build an installer ISO into ./output
 ```
+
+Run the lightweight maintenance regression checks without building an image:
+
+```bash
+python3 -m unittest discover -s tests -v
+for script in build_files/*.sh; do bash -n "${script}"; done
+```
+
+The disk-image workflow targets amd64, matching the published container image.
+Its PR runs validate installer generation from the existing published `:latest`
+image, not the container built by that PR. Testing installers for a new image
+requires publishing it first, then rerunning the disk-image workflow.
 
 Base images are pinned by digest in the [`Justfile`](./Justfile) and
 [`.github/workflows/build.yml`](./.github/workflows/build.yml); digest bumps are
