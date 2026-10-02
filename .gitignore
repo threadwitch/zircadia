@@ -39,3 +39,6 @@ _build-*/**
 #   .claude/settings.json         — Claude Code project settings
 #   .claude/settings.local.json is per-developer, ignore separately if needed
 # === End crosslink managed ===
+
+# Python regression-test bytecode
+__pycache__/

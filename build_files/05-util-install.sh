@@ -48,6 +48,7 @@ dnf -y install age
 # deliberate, reproducible install rather than accepting a moving target.
 # NOTE: Gemfury RPMs are unsigned, so gpgcheck=0 is required (see repo file).
 # renovate: datasource=github-releases depName=nushell/nushell
+nushell_version="0.114.1"
 cat > /etc/yum.repos.d/fury-nushell.repo <<'EOF'
 [gemfury-nushell]
 name=Gemfury Nushell Repo
@@ -63,7 +64,7 @@ EOF
 # only runs post-install.nu to register plugins into the user's config dir,
 # which is live-state that belongs to the running system, not the image.
 # Install with scriptlets disabled; plugins register on first login.
-dnf -y install --setopt=tsflags=noscripts nushell-0.114.1
+dnf -y install --setopt=tsflags=noscripts "nushell-${nushell_version}"
 
 # age-plugin-yubikey is not packaged for Fedora 44. Build the pinned crate
 # against Fedora's system pcsc-lite, then remove the toolchain; unlike the
@@ -108,12 +109,23 @@ printf '%s  %s\n' "${sops_sha256}" /tmp/sops.rpm | sha256sum --check --strict
 dnf -y install /tmp/sops.rpm
 rm -f /tmp/sops.rpm
 
-# jj from the jj-vcs COPR (GPG-signed) tracks upstream (Fedora/Terra lag).
-# Pin to the latest upstream version for a deliberate, reproducible install.
-# Disable weak deps to avoid pulling editor/pager extras (bat, 7zip, unzip).
+# COPR can retire pinned RPMs. Use the official static release instead, with
+# its GitHub release-asset SHA-256 pinned alongside the version. Update both
+# together when reviewing a Renovate version bump.
 # renovate: datasource=github-releases depName=jj-vcs/jj
-dnf -y copr enable aldantanneo/jj-vcs
-dnf -y --setopt=install_weak_deps=False install jj-cli-0.44.0
+jj_version="0.44.0"
+jj_url="https://github.com/jj-vcs/jj/releases/download/v${jj_version}/jj-v${jj_version}-x86_64-unknown-linux-musl.tar.gz"
+jj_sha256="0a07bab4641a55fd2bc2fd1563ba3a3f9a577584086ad74086a1c5b69b3ffce9"
+jj_dir="$(mktemp -d)"
+trap 'rm -rf "${jj_dir}"' EXIT
+curl -fsSL "${jj_url}" -o "${jj_dir}/jj.tar.gz"
+printf '%s  %s\n' "${jj_sha256}" "${jj_dir}/jj.tar.gz" | sha256sum --check --strict
+tar -xzf "${jj_dir}/jj.tar.gz" -C "${jj_dir}" ./jj ./LICENSE
+install -m 0755 "${jj_dir}/jj" /usr/bin/jj
+install -Dm 0644 "${jj_dir}/LICENSE" /usr/share/licenses/jj/LICENSE
+jj --version
+rm -rf "${jj_dir}"
+trap - EXIT
 
 # Fonts good.
 dnf -y install \
