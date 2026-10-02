@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `zjust update-all` recipe to upgrade the base image, Flatpaks, and Homebrew together
 
 ### Fixed
+- Correct disk-image CI config paths and amd64 selection, align the builder with local ISO recipes, and set explicit root filesystems
 - Restore jj 0.44.0 installation from its checksummed upstream release instead of an unavailable COPR RPM
 - Detect pinned Nushell and jj versions with Renovate
 - Move the iwd backend drop-in from the invalid `/etc/NetworkManager/NetworkManager.conf.d/` to `/etc/NetworkManager/conf.d/`, the directory NetworkManager actually reads; the previous path was silently ignored so NM stayed on wpa_supplicant and WiFi kept failing the handshake
