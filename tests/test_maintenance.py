@@ -13,7 +13,6 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 UTIL_INSTALL = (ROOT / "build_files/05-util-install.sh").read_text()
-DISK_WORKFLOW = (ROOT / ".github/workflows/build-disk.yml").read_text()
 
 
 class MaintenanceConfigurationTests(unittest.TestCase):
@@ -45,30 +44,6 @@ class MaintenanceConfigurationTests(unittest.TestCase):
     def test_nushell_install_uses_the_tracked_version(self):
         self.assertIn('"nushell-${nushell_version}"', UTIL_INSTALL)
 
-    def test_installer_paths_exist_and_trigger_pull_requests(self):
-        config_line = next(line for line in DISK_WORKFLOW.splitlines()
-                           if "config-file:" in line)
-        paths = re.findall(r"'([^']+\.toml)'", config_line)
-        # Podman requires ./ or / to distinguish bind mounts from named volumes.
-        self.assertEqual(set(paths), {"./iso.toml", "./disk_config/disk.toml"})
-        for path in paths:
-            self.assertTrue((ROOT / path).is_file(), path)
-            self.assertIn(f"      - '{path.removeprefix('./')}'", DISK_WORKFLOW)
-        self.assertIn("      - '.github/workflows/build-disk.yml'", DISK_WORKFLOW)
-
-    def test_installer_always_uses_published_architecture(self):
-        self.assertIn("    runs-on: ubuntu-24.04\n", DISK_WORKFLOW)
-        self.assertNotIn("inputs.platform", DISK_WORKFLOW)
-        self.assertNotIn("arm64", DISK_WORKFLOW)
-
-    def test_installer_rootfs_is_explicit_for_each_image_type(self):
-        self.assertIn(
-            "rootfs: ${{ matrix.disk-type == 'anaconda-iso' && 'btrfs' || 'ext4' }}",
-            DISK_WORKFLOW,
-        )
-        justfile = (ROOT / "Justfile").read_text()
-        self.assertIn('--rootfs btrfs', justfile)
-        self.assertIn('filesystem := env("BUILD_FILESYSTEM", "ext4")', justfile)
 
     def test_onepassword_step_is_disabled_without_removing_security_tools(self):
         containerfile = (ROOT / "Containerfile").read_text()

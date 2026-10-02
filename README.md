@@ -79,11 +79,6 @@ python3 -m unittest discover -s tests -v
 for script in build_files/*.sh; do bash -n "${script}"; done
 ```
 
-The disk-image workflow targets amd64, matching the published container image.
-Its PR runs validate installer generation from the existing published `:latest`
-image, not the container built by that PR. Testing installers for a new image
-requires publishing it first, then rerunning the disk-image workflow.
-
 Base images are pinned by digest in the [`Justfile`](./Justfile) and
 [`.github/workflows/build.yml`](./.github/workflows/build.yml); digest bumps are
 proposed by Renovate (see [`.github/renovate.json5`](./.github/renovate.json5)).
