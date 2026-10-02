@@ -72,6 +72,19 @@ just build          # build zircadia:latest
 just iso            # build an installer ISO into ./output
 ```
 
+The disk-image workflow targets amd64, matching the published container image.
+It uses the same upstream builder as the local ISO recipes, with btrfs for the
+installer ISO and ext4 for qcow2. Its PR runs validate installer generation from
+the existing published `:latest` image, not the container built by that PR.
+Testing installers for a new image requires publishing it first, then rerunning
+the disk-image workflow.
+
+Run the offline workflow regression checks with:
+
+```bash
+python3 -m unittest discover -s tests -p 'test_installer_workflow.py' -v
+```
+
 Base images are pinned by digest in the [`Justfile`](./Justfile) and
 [`.github/workflows/build.yml`](./.github/workflows/build.yml); digest bumps are
 proposed by Renovate (see [`.github/renovate.json5`](./.github/renovate.json5)).
