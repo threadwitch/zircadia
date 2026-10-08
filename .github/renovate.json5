@@ -31,8 +31,17 @@
         "/^build_files/05-util-install\\.sh$/",
       ],
       "matchStrings": [
-        "datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+(?:[a-z_]+_version)=\"(?<currentValue>[^\"]+)\"",
+        "datasource=(?<datasource>github-releases|crate) depName=(?<depName>\\S+)\\s+(?:[a-z_]+_version)=\"(?<currentValue>[^\"]+)\"",
       ],
+    },
+    {
+      // Track the release asset digest together with the full GitHub release tag.
+      "customType": "regex",
+      "managerFilePatterns": ["/^build_files/05-util-install\\.sh$/"],
+      "matchStrings": [
+        "datasource=(?<datasource>github-release-attachments) depName=(?<depName>jj-vcs/jj)\\r?\\njj_version=\"(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)\"\\r?\\njj_url=\"[^\"\\r\\n]+\"\\r?\\njj_sha256=\"(?<currentDigest>[a-f0-9]{64})\"",
+      ],
+      "versioningTemplate": "semver-coerced",
     },
   ],
 
@@ -57,8 +66,8 @@
       "matchFileNames": [".github/workflows/**.yaml", ".github/workflows/**.yml"],
     },
     {
-      // Release assets are checksum-pinned beside their versions. Renovate can
-      // propose the version, but the matching SHA-256 must be reviewed/updated.
+      // Release assets remain reviewed updates. jj tracks its asset digest;
+      // sops and age-plugin-tpm still need manual checksum updates.
       "matchDepNames": [
         "Foxboron/age-plugin-tpm",
         "getsops/sops",
