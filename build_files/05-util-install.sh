@@ -110,12 +110,12 @@ dnf -y install /tmp/sops.rpm
 rm -f /tmp/sops.rpm
 
 # COPR can retire pinned RPMs. Use the official static release instead, with
-# its GitHub release-asset SHA-256 pinned alongside the version. Update both
-# together when reviewing a Renovate version bump.
-# renovate: datasource=github-releases depName=jj-vcs/jj
-jj_version="0.45.1"
-jj_url="https://github.com/jj-vcs/jj/releases/download/v${jj_version}/jj-v${jj_version}-x86_64-unknown-linux-musl.tar.gz"
-jj_sha256="f35438350b5d61963aac5dd74ede510b31d6b9690769d1a6268cf058cc825f72"
+# its GitHub release-asset SHA-256 pinned alongside the full release tag.
+# Renovate tracks the tag and archive checksum together.
+# renovate: datasource=github-release-attachments depName=jj-vcs/jj
+jj_version="v0.46.0"
+jj_url="https://github.com/jj-vcs/jj/releases/download/${jj_version}/jj-${jj_version}-x86_64-unknown-linux-musl.tar.gz"
+jj_sha256="fce0271158e665ceb82dc66c5eb95b1728649094e9133074f3b5baece345fc08"
 jj_dir="$(mktemp -d)"
 trap 'rm -rf "${jj_dir}"' EXIT
 curl -fsSL "${jj_url}" -o "${jj_dir}/jj.tar.gz"

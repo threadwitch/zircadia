@@ -76,7 +76,7 @@ class JujutsuInstallTests(unittest.TestCase):
         curl.chmod(0o755)
 
     def run_install(self, *, corrupt_checksum=False, fail_download=False):
-        block = UTIL_INSTALL.split("# renovate: datasource=github-releases depName=jj-vcs/jj\n")[1]
+        block = UTIL_INSTALL.split("# renovate: datasource=github-release-attachments depName=jj-vcs/jj\n")[1]
         block = block.split("# Fonts good.")[0]
         checksum = hashlib.sha256(self.archive.read_bytes()).hexdigest()
         if corrupt_checksum:
