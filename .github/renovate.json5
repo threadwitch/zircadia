@@ -38,6 +38,15 @@
 
   "packageRules": [
     {
+      // osbuild's nested mounts fail on Ubuntu 26.04. Keep this disk builder
+      // on 24.04 while the image architecture is being replaced.
+      "matchManagers": ["github-actions"],
+      "matchDatasources": ["github-runners"],
+      "matchDepNames": ["ubuntu"],
+      "matchFileNames": [".github/workflows/build-disk.yml"],
+      "allowedVersions": "/^24\\.04$/",
+    },
+    {
       "automerge": true,
       "matchUpdateTypes": ["pin", "pinDigest"]
     },

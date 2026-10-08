@@ -32,6 +32,8 @@ jobs:
   build:
     name: Build disk images
     # The container workflow publishes amd64 only, including for PR validation.
+    # Keep osbuild on 24.04: nested mounts fail on the 26.04 runner.
+    # The matching Renovate rule holds only this workflow's runner.
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
