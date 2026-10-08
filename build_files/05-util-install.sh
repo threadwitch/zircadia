@@ -48,7 +48,7 @@ dnf -y install age
 # deliberate, reproducible install rather than accepting a moving target.
 # NOTE: Gemfury RPMs are unsigned, so gpgcheck=0 is required (see repo file).
 # renovate: datasource=github-releases depName=nushell/nushell
-nushell_version="0.114.1"
+nushell_version="0.116.1"
 cat > /etc/yum.repos.d/fury-nushell.repo <<'EOF'
 [gemfury-nushell]
 name=Gemfury Nushell Repo
