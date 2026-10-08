@@ -113,9 +113,9 @@ rm -f /tmp/sops.rpm
 # its GitHub release-asset SHA-256 pinned alongside the version. Update both
 # together when reviewing a Renovate version bump.
 # renovate: datasource=github-releases depName=jj-vcs/jj
-jj_version="0.44.0"
+jj_version="0.45.1"
 jj_url="https://github.com/jj-vcs/jj/releases/download/v${jj_version}/jj-v${jj_version}-x86_64-unknown-linux-musl.tar.gz"
-jj_sha256="0a07bab4641a55fd2bc2fd1563ba3a3f9a577584086ad74086a1c5b69b3ffce9"
+jj_sha256="f35438350b5d61963aac5dd74ede510b31d6b9690769d1a6268cf058cc825f72"
 jj_dir="$(mktemp -d)"
 trap 'rm -rf "${jj_dir}"' EXIT
 curl -fsSL "${jj_url}" -o "${jj_dir}/jj.tar.gz"
