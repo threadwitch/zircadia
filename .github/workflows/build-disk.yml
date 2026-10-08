@@ -32,7 +32,9 @@ jobs:
   build:
     name: Build disk images
     # The container workflow publishes amd64 only, including for PR validation.
-    runs-on: ubuntu-26.04
+    # Keep osbuild on 24.04: nested mounts fail on the 26.04 runner.
+    # The matching Renovate rule holds only this workflow's runner.
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -62,9 +64,6 @@ jobs:
         uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e # v9
         with:
           remove-codeql: true
-          # Ubuntu 26.04 lacks packages the action tries to remove (PowerShell).
-          # Keep directory and tool-cache cleanup without the brittle apt list.
-          remove-large-packages: false
 
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7

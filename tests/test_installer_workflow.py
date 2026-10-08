@@ -22,12 +22,9 @@ class InstallerWorkflowTests(unittest.TestCase):
         self.assertIn("      - '.github/workflows/build-disk.yml'", DISK_WORKFLOW)
 
     def test_installer_always_uses_published_architecture(self):
-        self.assertIn("    runs-on: ubuntu-26.04\n", DISK_WORKFLOW)
+        self.assertIn("    runs-on: ubuntu-24.04\n", DISK_WORKFLOW)
         self.assertNotIn("inputs.platform", DISK_WORKFLOW)
         self.assertNotIn("arm64", DISK_WORKFLOW)
-
-    def test_cleanup_skips_unavailable_apt_packages(self):
-        self.assertIn("          remove-large-packages: false\n", DISK_WORKFLOW)
 
     def test_installer_builder_matches_local_iso_recipes(self):
         builder = re.search(r'BIB_IMAGE: "([^"]+)"', DISK_WORKFLOW)[1]
