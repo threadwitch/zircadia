@@ -1,0 +1,10 @@
+name: Install pinned Cosign
+description: Install the reviewed Linux amd64 release after verifying its pinned SHA-256.
+runs:
+  using: composite
+  steps:
+    - name: Verify and install Cosign
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+      run: bash "${ACTION_PATH}/install.sh"
