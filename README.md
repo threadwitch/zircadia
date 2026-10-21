@@ -90,6 +90,32 @@ Base images are pinned by digest in the [`Justfile`](./Justfile) and
 [`.github/workflows/build.yml`](./.github/workflows/build.yml); digest bumps are
 proposed by Renovate (see [`.github/renovate.json5`](./.github/renovate.json5)).
 
+## Temporary Fedora 44 CA remediation
+
+The first image-build step installs only the signed Fedora 44
+`ca-certificates-2026.2.92_v9.0.319-1.fc44` package from
+[Koji build 3124620](https://koji.fedoraproject.org/koji/buildinfo?buildID=3124620).
+It pins the RPM's SHA-256, checks its signature against existing RPM keys, and
+requires DNF's local-package signature verification with every repository
+disabled. It does not enable updates-testing or import additional keys.
+[The Fedora update](https://bodhi.fedoraproject.org/updates/FEDORA-2026-56e14eb520)
+was in testing, pending stable publication, when this override was added.
+
+This removes the affected emSign roots and the AAA Certificate Services trust
+path from Fedora's default bundle. Connections still relying on those roots may
+fail. Custom trust inputs are preserved, and applications with separate or
+bundled trust stores need their own updates. This is not a claim that every
+application is remediated.
+
+The build fails if the package cannot be downloaded or verified, dependencies
+cannot be satisfied without another package, or the installed version remains below the fix. Newer upstream bundles are kept,
+using RPM's epoch/version/release comparison instead of a downgrade. The build
+also checks the removed roots by SHA-256 fingerprint and fails if either remains
+a TLS trust anchor, including one added
+by custom configuration; those inputs are left intact for explicit review.
+Remove the temporary package override once it is no longer needed upstream.
+No image is deployed by a PR build.
+
 ## Repository layout
 
 - [`Containerfile`](./Containerfile) — image build entrypoint; runs the numbered

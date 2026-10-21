@@ -13,6 +13,14 @@ COPY cosign.pub /files/usr/share/pki/containers/zircadia.pub
 
 FROM "${BASE_IMAGE}"
 
+# Apply the narrowly pinned Fedora CA remediation before other network installs.
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=tmpfs,dst=/var \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    --mount=type=tmpfs,dst=/boot \
+    /ctx/build/00-ca-certificates.sh
+
 # Install kernel
 # RUN --mount=type=cache,dst=/var/cache \
 #     --mount=type=cache,dst=/var/log \
