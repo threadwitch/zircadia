@@ -9,6 +9,7 @@
   // Keep base-image digest bumps to a reviewed weekly cadence rather than a
   // continuous stream of PRs (issue #2).
   "schedule": ["before 6am on monday"],
+  "timezone": "America/Los_Angeles",
 
   // The zirconium base images are referenced as build-args / shell assignments
   // rather than in a place Renovate's built-in managers parse, so detect the
@@ -58,6 +59,13 @@
     {
       "automerge": true,
       "matchUpdateTypes": ["pin", "pinDigest"]
+    },
+    {
+      // This action follows main and can change runner storage/cleanup behavior.
+      // Keep every update reviewed, including digest pins.
+      "matchManagers": ["github-actions"],
+      "matchDepNames": ["ublue-os/container-storage-action"],
+      "automerge": false,
     },
     {
       "enabled": false,
