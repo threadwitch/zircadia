@@ -16,6 +16,15 @@
   // digest-pinned references via the `# renovate:` annotations next to them.
   "customManagers": [
     {
+      // Update the Cosign release and its Linux amd64 digest together.
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/actions/install-cosign/install\\.sh$/"],
+      "matchStrings": [
+        "datasource=(?<datasource>github-release-attachments) depName=(?<depName>sigstore/cosign)\\r?\\ncosign_version=\"(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)\"\\r?\\ncosign_url=\"[^\"\\r\\n]+\"\\r?\\ncosign_sha256=\"(?<currentDigest>[a-f0-9]{64})\"",
+      ],
+      "versioningTemplate": "semver-coerced",
+    },
+    {
       "customType": "regex",
       "managerFilePatterns": [
         "/^\\.github/workflows/build\\.yml$/",
@@ -80,6 +89,7 @@
         "Foxboron/age-plugin-tpm",
         "getsops/sops",
         "jj-vcs/jj",
+        "sigstore/cosign",
       ],
       "automerge": false,
     },

@@ -1,0 +1,65 @@
+---
+name: Cosign installer checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/actions/install-cosign/**
+      - .github/workflows/build.yml
+      - .github/workflows/check-cosign.yml
+      - .github/renovate.json5
+      - tests/test_cosign_installer.py
+  push:
+    branches: [main]
+    paths:
+      - .github/actions/install-cosign/**
+      - .github/workflows/build.yml
+      - .github/workflows/check-cosign.yml
+      - .github/renovate.json5
+      - tests/test_cosign_installer.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Install pinned Cosign
+        uses: ./.github/actions/install-cosign
+      - name: Check binary and production signing options
+        shell: bash
+        run: |
+          set -euo pipefail
+          cosign version --json
+          # Validate the existing options without keys, a registry, or publishing.
+          cosign sign --new-bundle-format=false --use-signing-config=false --help > /dev/null
+      - name: Check offline signing and tamper rejection
+        shell: bash
+        env:
+          COSIGN_PASSWORD: ""
+        run: |
+          set -euo pipefail
+          scratch="$(mktemp -d)"
+          trap 'rm -rf "${scratch}"' EXIT
+          cd "${scratch}"
+          # Throwaway test keys and fixture only; nothing goes to a registry or log.
+          cosign generate-key-pair
+          printf 'zircadia offline compatibility fixture\n' > fixture.txt
+          cosign sign-blob --new-bundle-format=false --use-signing-config=false \
+            --tlog-upload=false --key cosign.key --output-signature fixture.sig fixture.txt
+          base64 -d fixture.sig > fixture.sig.bin
+          openssl dgst -sha256 -verify cosign.pub -signature fixture.sig.bin fixture.txt
+          printf 'tampered\n' > tampered.txt
+          if openssl dgst -sha256 -verify cosign.pub -signature fixture.sig.bin tampered.txt; then
+            echo "Tampered fixture unexpectedly verified" >&2
+            exit 1
+          fi
+      - name: Check shell syntax and offline failure cases
+        run: |
+          bash -n .github/actions/install-cosign/install.sh
+          python3 -m unittest discover -s tests -p 'test_cosign_installer.py' -v
