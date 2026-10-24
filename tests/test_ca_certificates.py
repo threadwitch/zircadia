@@ -11,8 +11,13 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "build_files/00-ca-certificates.sh"
-VERSION = "2026.2.92_v9.0.319-1.fc44"
-OLD_VERSION = "2026.2.90_v9.0.317-1.fc44"
+VERSION = "2026.2.92_v9.0.319-2.fc44"
+OLD_VERSION = "2026.2.92_v9.0.319-1.fc44"
+AFFECTED_ROOTS = [
+    "d7a7a0fb5d7e2731d771e9484ebcdef71d5f0c3e0a2948782bc83ee0ea699ef4",
+    "86a1ecba089c4a8d3bbe2734c612ba341d813e043cf9e8a862cd5c57a36bbe6b",
+    "f2edaaff3d9b701fb4d14c9f285f8c0bad90fc3bcc1fa07d47f4718edaba34a5",
+]
 
 
 class CaCertificatesTests(unittest.TestCase):
@@ -66,18 +71,26 @@ elif name == "rpmkeys":
     if os.environ.get("SIGNATURE_FAIL") == "1": sys.exit(1)
 elif name == "dnf":
     if os.environ.get("DNF_FAIL") == "1": sys.exit(1)
-    state.write_text(os.environ.get("RESULT_VERSION", "2026.2.92_v9.0.319-1.fc44"))
+    state.write_text(os.environ.get("RESULT_VERSION", "2026.2.92_v9.0.319-2.fc44"))
 elif name == "update-ca-trust":
     if os.environ.get("TRUST_FAIL") == "1": sys.exit(1)
 elif name == "trust":
     if os.environ.get("TRUST_LIST_FAIL") == "1": sys.exit(1)
+    purpose = next(arg.split("=", 1)[1] for arg in args if arg.startswith("--purpose="))
+    if os.environ.get("TRUST_FAIL_PURPOSE") == purpose: sys.exit(1)
     destination = pathlib.Path(args[-1])
     destination.mkdir()
-    if os.environ.get("EMPTY_TRUST") != "1":
+    empty = os.environ.get("EMPTY_TRUST") == "1"
+    if purpose == "code-signing":
+        empty = os.environ.get("EMPTY_CODE_SIGNING") == "1"
+    if not empty:
         (destination / "custom-label.pem").write_text("anchor fixture")
 elif name == "openssl":
     if os.environ.get("OPENSSL_FAIL") == "1": sys.exit(1)
-    fingerprint = os.environ.get("ANCHOR", "ab" * 32)
+    purpose = pathlib.Path(args[args.index("-in") + 1]).parent.name
+    if os.environ.get("OPENSSL_FAIL_PURPOSE") == purpose: sys.exit(1)
+    key = "CODE_SIGNING_ANCHOR" if purpose == "code-signing" else "ANCHOR"
+    fingerprint = os.environ.get(key, "ab" * 32)
     print("sha256 Fingerprint=" + fingerprint)
 else:
     raise AssertionError(name)
@@ -115,7 +128,9 @@ else:
         curl = self.called("curl")[0]
         self.assertIn("=https", curl)
         self.assertTrue(any(arg.startswith("https://kojipkgs.fedoraproject.org/")
-                            and "/data/signed/6d9f90a6/noarch/" in arg for arg in curl))
+                            and "/2.fc44/data/signed/6d9f90a6/noarch/" in arg
+                            and arg.endswith(f"ca-certificates-{VERSION}.noarch.rpm")
+                            for arg in curl))
         self.assertEqual(len(self.called("update-ca-trust")), 1)
         self.assertEqual(self.state.read_text(), VERSION)
 
@@ -184,8 +199,7 @@ else:
 
     def test_affected_root_even_with_a_custom_label_fails_without_removing_it(self):
         self.state.write_text(VERSION)
-        for anchor in ["d7a7a0fb5d7e2731d771e9484ebcdef71d5f0c3e0a2948782bc83ee0ea699ef4",
-                       "86a1ecba089c4a8d3bbe2734c612ba341d813e043cf9e8a862cd5c57a36bbe6b"]:
+        for anchor in AFFECTED_ROOTS:
             # Exercise the usual uppercase, colon-separated OpenSSL format too.
             fingerprint = ":".join(anchor[i:i+2].upper() for i in range(0, 64, 2))
             with self.subTest(anchor=anchor):
@@ -197,6 +211,43 @@ else:
                                  ["extract", "--filter=ca-anchors", "--purpose=server-auth",
                                   "--format=pem-directory", "--overwrite"])
                 self.assertFalse(self.called("dnf"))
+
+    def test_code_signing_roots_are_checked_separately_from_tls(self):
+        self.state.write_text(VERSION)
+        for anchor in AFFECTED_ROOTS:
+            fingerprint = ":".join(anchor[i:i+2].upper() for i in range(0, 64, 2))
+            with self.subTest(anchor=anchor):
+                result = self.run_install(CODE_SIGNING_ANCHOR=fingerprint)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("code-signing trust anchor", result.stderr)
+                self.assertIn("review custom trust inputs", result.stderr)
+                self.assertEqual(len(self.called("trust")), 2)
+                self.assertEqual(self.called("trust")[1][1:-1],
+                                 ["extract", "--filter=ca-anchors", "--purpose=code-signing",
+                                  "--format=pem-directory", "--overwrite"])
+                self.assertFalse(self.called("dnf"))
+
+    def test_empty_code_signing_store_is_valid_after_successful_extraction(self):
+        result = self.run_install(EMPTY_CODE_SIGNING="1")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Verified code-signing trust anchors: 0 checked", result.stdout)
+        self.assertEqual(len(self.called("trust")), 2)
+
+    def test_code_signing_extraction_and_fingerprint_errors_fail_closed(self):
+        for extra in [{"TRUST_FAIL_PURPOSE": "code-signing"},
+                      {"OPENSSL_FAIL_PURPOSE": "code-signing"},
+                      {"CODE_SIGNING_ANCHOR": "invalid"}]:
+            with self.subTest(extra=extra):
+                result = self.run_install(**extra)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertNotIn("Verified ca-certificates", result.stdout)
+
+    def test_healthy_store_checks_both_purposes(self):
+        result = self.run_install()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Verified server-auth trust anchors: 1 checked", result.stdout)
+        self.assertIn("Verified code-signing trust anchors: 1 checked", result.stdout)
+        self.assertEqual(len(self.called("trust")), 2)
 
     def test_empty_trust_store_or_fingerprint_failure_fails_closed(self):
         for extra in [{"EMPTY_TRUST": "1"}, {"OPENSSL_FAIL": "1"}, {"ANCHOR": "invalid"}]:

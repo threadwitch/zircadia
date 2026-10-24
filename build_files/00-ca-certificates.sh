@@ -4,11 +4,11 @@ set -euo pipefail
 
 # Temporary Fedora 44 override for the eMudhra incident. Keep this independent
 # of the base-image pin and remove it once the base includes the remediation.
-# https://bodhi.fedoraproject.org/updates/FEDORA-2026-56e14eb520
-# Koji build 3124620, signed with Fedora 44's existing key (6d9f90a6).
-ca_certificates_version="2026.2.92_v9.0.319-1.fc44"
-ca_certificates_sha256="3de32ead7049b1c06f5cbc821d7991051f5d54afd044f2db8b0529584d9d36b3"
-ca_certificates_url="https://kojipkgs.fedoraproject.org/packages/ca-certificates/2026.2.92_v9.0.319/1.fc44/data/signed/6d9f90a6/noarch/ca-certificates-${ca_certificates_version}.noarch.rpm"
+# https://bodhi.fedoraproject.org/updates/FEDORA-2026-0609e13c0d
+# Koji build 3125414, signed with Fedora 44's existing key (6d9f90a6).
+ca_certificates_version="2026.2.92_v9.0.319-2.fc44"
+ca_certificates_sha256="ce1202707eb5df4bb506202c94f4fdc948a51ab044e7f7ead3ddd5e54dd8bde5"
+ca_certificates_url="https://kojipkgs.fedoraproject.org/packages/ca-certificates/2026.2.92_v9.0.319/2.fc44/data/signed/6d9f90a6/noarch/ca-certificates-${ca_certificates_version}.noarch.rpm"
 
 if [[ "$(rpm --eval '%{fedora}')" != 44 ]]; then
     echo "The ca-certificates override is only approved for Fedora 44." >&2
@@ -53,33 +53,41 @@ fi
 # Regenerate extracted bundles using normal Fedora policy. This preserves
 # administrator-provided anchors and blocklists; do not rewrite custom inputs.
 update-ca-trust
-# Check certificate identities, not mutable labels. These SHA-256 fingerprints
-# are from the two removal patches in Fedora's source commit
-# 1ccf8e36dcf991db7ae4a4220c1612d1f43d96ec (AAA and emSign ECC Root CA - G3).
-# A custom anchor restoring either root fails the build but is NOT removed.
-trust extract --filter=ca-anchors --purpose=server-auth --format=pem-directory \
-    --overwrite "${temporary_directory}/anchors"
+# Check identities, not mutable labels. Fedora source commit
+# 8cd553919e44c0859c528132905846c86874b211 includes the removal patches for
+# AAA, emSign ECC Root CA - G3, and the additional emSign Root CS CA - G3.
+# Extract each purpose separately: plain PEM cannot represent purpose policy.
+# A custom anchor restoring any affected root fails the build but is NOT removed.
 shopt -s nullglob
-anchors=("${temporary_directory}/anchors/"*.pem)
-if (( ${#anchors[@]} == 0 )); then
-    echo "No TLS trust anchors were extracted; refusing an unverified trust store." >&2
-    exit 1
-fi
-for certificate in "${anchors[@]}"; do
-    fingerprint="$(openssl x509 -in "${certificate}" -noout -fingerprint -sha256)"
-    fingerprint="${fingerprint#*=}"
-    fingerprint="${fingerprint//:/}"
-    fingerprint="${fingerprint,,}"
-    if [[ ! "${fingerprint}" =~ ^[0-9a-f]{64}$ ]]; then
-        echo "Could not fingerprint a TLS trust anchor." >&2
+for purpose in server-auth code-signing; do
+    trust extract --filter=ca-anchors --purpose="${purpose}" --format=pem-directory \
+        --overwrite "${temporary_directory}/${purpose}"
+    anchors=("${temporary_directory}/${purpose}/"*.pem)
+    # An empty code-signing set is valid (nothing is trusted for that purpose).
+    # Keep the existing TLS sanity check; extraction failures always fail closed.
+    if [[ "${purpose}" == server-auth ]] && (( ${#anchors[@]} == 0 )); then
+        echo "No TLS trust anchors were extracted; refusing an unverified trust store." >&2
         exit 1
     fi
-    case "${fingerprint}" in
-        d7a7a0fb5d7e2731d771e9484ebcdef71d5f0c3e0a2948782bc83ee0ea699ef4|\
-        86a1ecba089c4a8d3bbe2734c612ba341d813e043cf9e8a862cd5c57a36bbe6b)
-            echo "An affected CA is still a TLS trust anchor; review custom trust inputs without deleting them automatically." >&2
+    for certificate in "${anchors[@]}"; do
+        fingerprint="$(openssl x509 -in "${certificate}" -noout -fingerprint -sha256)"
+        fingerprint="${fingerprint#*=}"
+        fingerprint="${fingerprint//:/}"
+        fingerprint="${fingerprint,,}"
+        if [[ ! "${fingerprint}" =~ ^[0-9a-f]{64}$ ]]; then
+            echo "Could not fingerprint a ${purpose} trust anchor." >&2
             exit 1
-            ;;
-    esac
+        fi
+        case "${fingerprint}" in
+            d7a7a0fb5d7e2731d771e9484ebcdef71d5f0c3e0a2948782bc83ee0ea699ef4|\
+            86a1ecba089c4a8d3bbe2734c612ba341d813e043cf9e8a862cd5c57a36bbe6b|\
+            f2edaaff3d9b701fb4d14c9f285f8c0bad90fc3bcc1fa07d47f4718edaba34a5)
+                echo "An affected CA is still a ${purpose} trust anchor; review custom trust inputs without deleting them automatically." >&2
+                exit 1
+                ;;
+        esac
+    done
+    printf 'Verified %s trust anchors: %s checked; affected CA fingerprints absent\n' \
+        "${purpose}" "${#anchors[@]}"
 done
 printf 'Verified ca-certificates %s\n' "${installed_version}"
