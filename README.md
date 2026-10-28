@@ -100,11 +100,11 @@ stage was removed; this image continues to inherit its kernel from Zirconium.
 
 Terra's Fedora 45 vendor repo layout (`/usr/share/dnf5/repos.d`) and the older
 `/etc/yum.repos.d` layout are both handled at finalization, with disabled copies
-available to the installer dependency solver. Both native-release multilib
-`fdk-aac` builds must exist before codec swapping; an unavailable F45 build
-blocks the image rather than falling back to fc44 or `fdk-aac-free`.
-At initial PR preparation, Terra 45 multimedia metadata did not yet contain
-`fdk-aac`; successful full image CI is required before this transition is ready.
+available to the installer dependency solver. Fedora's native `fdk-aac-free`
+package is used with matching x86_64/i686 versions, without a fixed versionlock
+or exclusion. It retains ordinary AAC support, but not FDK HE/HEv2 profiles.
+The full Terra codec can be reconsidered when a compatible F45 package becomes
+available; this is not an automatic switch or a claim of media feature parity.
 A container build does not validate boot, desktop, hardware or installer behavior.
 
 For deliberate Fedora 44 builds, the first image-build step retains the isolated

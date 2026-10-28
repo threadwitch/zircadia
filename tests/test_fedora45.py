@@ -16,22 +16,24 @@ class Fedora45Tests(unittest.TestCase):
         self.assertNotIn('FROM ghcr.io/ublue-os/akmods', containerfile)
         self.assertNotIn('fc44', containerfile)
 
-    def test_codec_preflight_requires_both_native_release_architectures(self):
+    def test_native_codec_versions_align_without_full_codec_pin(self):
         source = (ROOT / 'build_files/03-gaming-install.sh').read_text()
-        block = source[source.index('fedora_version='):source.index('for arch in x86_64 i686; do\n\tif rpm')]
+        self.assertNotIn('exclude=fdk-aac-free', source)
+        self.assertNotIn('dnf versionlock add fdk-aac', source)
+        self.assertNotIn('2.0.3-1.fc', source)
+        block = source[source.index('dnf -y upgrade fdk-aac-free'):source.index('dnf -y --enablerepo=terra --enablerepo=terra-mesa --enablerepo=terra-extras install')]
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            (root / 'rpm').write_text('#!/bin/sh\necho "${FEDORA}"\n')
-            (root / 'dnf').write_text('''#!/bin/bash
-name="${@: -1}"
-if [[ "$name" != *"${MISSING:-nothing}" ]]; then echo "$name"; fi
-''')
-            for f in root.iterdir(): f.chmod(0o755)
-            for release, missing, success in [('45', '', True), ('44', '', True),
-                                               ('45', 'i686', False), ('46', '', False)]:
-                env = dict(os.environ, PATH=f'{root}:{os.environ["PATH"]}', FEDORA=release, MISSING=missing)
-                result = subprocess.run(['bash', '-euo', 'pipefail', '-c', block], env=env, capture_output=True)
-                self.assertEqual(result.returncode == 0, success, result.stderr)
+            log = root / 'calls'
+            (root / 'rpm').write_text('#!/bin/sh\nprintf "2.0.3-3.fc45"\n')
+            (root / 'dnf').write_text('#!/bin/sh\necho "$*" >> "$LOG"\n')
+            for name in ['rpm', 'dnf']: (root / name).chmod(0o755)
+            env = dict(os.environ, PATH=f'{root}:{os.environ["PATH"]}', LOG=str(log))
+            result = subprocess.run(['bash', '-euo', 'pipefail', '-c', block], env=env, capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(log.read_text().splitlines(), [
+                '-y upgrade fdk-aac-free.x86_64',
+                '-y install fdk-aac-free-2.0.3-3.fc45.i686'])
 
     def test_final_hooks_cover_vendor_and_legacy_repo_layouts(self):
         source = (ROOT / 'build_files/99-final-hooks.sh').read_text()

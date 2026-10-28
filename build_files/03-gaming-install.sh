@@ -5,41 +5,14 @@ set -xeuo pipefail
 # dnf -y --enablerepo copr:copr.fedorainfracloud.org:lizardbyte:beta install \
 # 	Sunshine
 
-# The full FDK AAC codec is in Terra Multimedia. Steam pulls a 32-bit media
-# stack, so install the same pinned Terra build for both architectures before
-# dependency solving can select Fedora's feature-reduced fdk-aac-free instead.
-# Terra's RPM currently provides but does not conflict with fdk-aac-free; swap
-# either architecture explicitly when an updated base happens to ship it.
-fedora_version="$(rpm --eval '%{fedora}')"
-case "${fedora_version}" in
-    44|45) fdk_aac_version="2.0.3-1.fc${fedora_version}" ;;
-    *) echo "Unreviewed Fedora release for the multilib codec pin." >&2; exit 1 ;;
-esac
-# Require both native-release builds before swapping either architecture.
-# Do not silently substitute fdk-aac-free or pull a Fedora 44 RPM into Fedora 45.
-for arch in x86_64 i686; do
-    available="$(dnf -q --enablerepo=terra-multimedia repoquery --available \
-        --qf '%{name}-%{version}-%{release}.%{arch}' "fdk-aac-${fdk_aac_version}.${arch}")"
-    if ! grep -Fxq "fdk-aac-${fdk_aac_version}.${arch}" <<< "${available}"; then
-        echo "Missing required Terra codec: fdk-aac-${fdk_aac_version}.${arch}" >&2
-        exit 1
-    fi
-done
-for arch in x86_64 i686; do
-	if rpm -q "fdk-aac-free.${arch}" >/dev/null 2>&1; then
-		dnf -y --enablerepo=terra-multimedia swap \
-			"fdk-aac-free.${arch}" \
-			"fdk-aac-${fdk_aac_version}.${arch}"
-	fi
-done
-dnf -y --enablerepo=terra-multimedia install \
-	"fdk-aac-${fdk_aac_version}.x86_64" \
-	"fdk-aac-${fdk_aac_version}.i686"
-dnf versionlock add fdk-aac.x86_64 fdk-aac.i686
-
-# Pinning fdk-aac does not hide the differently named Fedora alternative.
-# Keep later transactions on the selected codec family.
-dnf -y config-manager setopt exclude=fdk-aac-free
+# Fedora 45 currently has no Terra full fdk-aac build. Use Fedora's native
+# library consistently instead of pinning an unavailable or cross-release RPM.
+# Align both architectures before Steam's dependency solve. Do not versionlock
+# the codec or exclude Fedora's package. Full HE/HEv2 FDK support can be revisited
+# explicitly when a compatible Terra package becomes available.
+dnf -y upgrade fdk-aac-free.x86_64
+fdk_aac_version="$(rpm -q --qf '%{VERSION}-%{RELEASE}' fdk-aac-free.x86_64)"
+dnf -y install "fdk-aac-free-${fdk_aac_version}.i686"
 
 dnf -y --enablerepo=terra --enablerepo=terra-mesa --enablerepo=terra-extras install \
 	terra-gamescope.x86_64 \
