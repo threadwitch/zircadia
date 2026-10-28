@@ -16,11 +16,25 @@ EOF
 # Terra's file:// keys. Editing the repo files is what BIB honors. This runs
 # after all install steps, which enable Terra transiently via --enablerepo, so
 # disabling here is safe.
-sed -i 's/^enabled=1/enabled=0/' \
-	/etc/yum.repos.d/terra.repo \
-	/etc/yum.repos.d/terra-extras.repo \
-	/etc/yum.repos.d/terra-mesa.repo \
-	/etc/yum.repos.d/terra-multimedia.repo
+# Terra 45 moved vendor definitions to /usr/share/dnf5/repos.d. Cover both
+# layouts, and leave disabled compatibility copies for BIB's /etc-only reader.
+for repo in terra terra-extras terra-mesa terra-multimedia; do
+    found=false
+    for directory in /usr/share/dnf5/repos.d /etc/yum.repos.d; do
+        file="${directory}/${repo}.repo"
+        if [[ -f "${file}" ]]; then
+            sed -i 's/^enabled=1/enabled=0/' "${file}"
+            found=true
+        fi
+    done
+    if [[ "${found}" != true ]]; then
+        echo "Missing expected repository definition: ${repo}" >&2
+        exit 1
+    fi
+    if [[ ! -f "/etc/yum.repos.d/${repo}.repo" ]]; then
+        install -Dm 0644 "/usr/share/dnf5/repos.d/${repo}.repo" "/etc/yum.repos.d/${repo}.repo"
+    fi
+done
 
 cp -avf "/ctx/files"/. /
 

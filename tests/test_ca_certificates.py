@@ -143,10 +143,34 @@ else:
         self.assertTrue(self.called("update-ca-trust"))
 
     def test_wrong_fedora_release_fails_before_download(self):
-        result = self.run_install(FEDORA="45")
+        result = self.run_install(FEDORA="46")
         self.assertNotEqual(result.returncode, 0)
         self.assertFalse(self.called("curl"))
         self.assertFalse(self.called("dnf"))
+
+    def test_fedora45_inherits_fix_without_fedora44_transaction(self):
+        self.state.write_text("2026.2.92_v9.0.319-2.fc45")
+        result = self.run_install(FEDORA="45")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(self.called("curl"))
+        self.assertFalse(self.called("dnf"))
+        self.assertEqual(len(self.called("trust")), 2)
+
+    def test_fedora45_old_bundle_fails_without_cross_release_fallback(self):
+        self.state.write_text("2026.2.92_v9.0.319-1.fc45")
+        result = self.run_install(FEDORA="45")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("no cross-release fallback", result.stderr)
+        self.assertFalse(self.called("curl"))
+        self.assertFalse(self.called("dnf"))
+        self.assertFalse(self.called("update-ca-trust"))
+
+    def test_fedora45_affected_anchors_still_fail_closed(self):
+        self.state.write_text("2026.2.92_v9.0.319-2.fc45")
+        for key in ["ANCHOR", "CODE_SIGNING_ANCHOR"]:
+            result = self.run_install(FEDORA="45", **{key: AFFECTED_ROOTS[2]})
+            self.assertNotEqual(result.returncode, 0)
+            self.assertFalse(self.called("dnf"))
 
     def test_missing_installed_package_fails_closed(self):
         result = self.run_install(QUERY_FAIL="1")

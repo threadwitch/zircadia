@@ -10,7 +10,21 @@ set -xeuo pipefail
 # dependency solving can select Fedora's feature-reduced fdk-aac-free instead.
 # Terra's RPM currently provides but does not conflict with fdk-aac-free; swap
 # either architecture explicitly when an updated base happens to ship it.
-fdk_aac_version="2.0.3-1.fc44"
+fedora_version="$(rpm --eval '%{fedora}')"
+case "${fedora_version}" in
+    44|45) fdk_aac_version="2.0.3-1.fc${fedora_version}" ;;
+    *) echo "Unreviewed Fedora release for the multilib codec pin." >&2; exit 1 ;;
+esac
+# Require both native-release builds before swapping either architecture.
+# Do not silently substitute fdk-aac-free or pull a Fedora 44 RPM into Fedora 45.
+for arch in x86_64 i686; do
+    available="$(dnf -q --enablerepo=terra-multimedia repoquery --available \
+        --qf '%{name}-%{version}-%{release}.%{arch}' "fdk-aac-${fdk_aac_version}.${arch}")"
+    if ! grep -Fxq "fdk-aac-${fdk_aac_version}.${arch}" <<< "${available}"; then
+        echo "Missing required Terra codec: fdk-aac-${fdk_aac_version}.${arch}" >&2
+        exit 1
+    fi
+done
 for arch in x86_64 i686; do
 	if rpm -q "fdk-aac-free.${arch}" >/dev/null 2>&1; then
 		dnf -y --enablerepo=terra-multimedia swap \
