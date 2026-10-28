@@ -3,17 +3,19 @@
 set -euo pipefail
 
 # Temporary Fedora 44 override for the eMudhra incident. Keep this independent
-# of the base-image pin and remove it once the base includes the remediation.
+# of the base-image pin. Fedora 45 must inherit its own corrected package.
 # https://bodhi.fedoraproject.org/updates/FEDORA-2026-0609e13c0d
 # Koji build 3125414, signed with Fedora 44's existing key (6d9f90a6).
 ca_certificates_version="2026.2.92_v9.0.319-2.fc44"
 ca_certificates_sha256="ce1202707eb5df4bb506202c94f4fdc948a51ab044e7f7ead3ddd5e54dd8bde5"
 ca_certificates_url="https://kojipkgs.fedoraproject.org/packages/ca-certificates/2026.2.92_v9.0.319/2.fc44/data/signed/6d9f90a6/noarch/ca-certificates-${ca_certificates_version}.noarch.rpm"
 
-if [[ "$(rpm --eval '%{fedora}')" != 44 ]]; then
-    echo "The ca-certificates override is only approved for Fedora 44." >&2
-    exit 1
-fi
+fedora_version="$(rpm --eval '%{fedora}')"
+case "${fedora_version}" in
+    44) ;; # The signed, checksummed fallback above is Fedora 44 only.
+    45) ca_certificates_version="2026.2.92_v9.0.319-2.fc45" ;;
+    *) echo "CA remediation is only approved for Fedora 44 and 45." >&2; exit 1 ;;
+esac
 
 # Compare with RPM's own EVR rules, including epochs; never downgrade a newer
 # upstream bundle. Pass values as environment data rather than Lua source.
@@ -32,6 +34,10 @@ check_installed_version
 temporary_directory="$(mktemp -d)"
 trap 'rm -rf "${temporary_directory}"' EXIT
 if [[ "${version_comparison}" == -1 ]]; then
+    if [[ "${fedora_version}" != 44 ]]; then
+        echo "Fedora 45 must inherit ca-certificates >= ${ca_certificates_version}; no cross-release fallback is permitted." >&2
+        exit 1
+    fi
     package="${temporary_directory}/ca-certificates.rpm"
     curl --fail --show-error --location --retry 3 --proto '=https' --tlsv1.2 \
         "${ca_certificates_url}" --output "${package}"

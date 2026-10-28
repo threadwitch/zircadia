@@ -1,10 +1,4 @@
 ARG BASE_IMAGE="${BASE_IMAGE:-}"
-ARG FEDORA_VERSION="${FEDORA_VERSION:-44}"
-ARG KERNEL_FLAVOR="${KERNEL_FLAVOR:-ogc}"
-ARG KERNEL_VERSION="${KERNEL_VERSION:-6.19.14-ogc1.1.fc44.x86_64}"
-
-FROM ghcr.io/ublue-os/akmods:${KERNEL_FLAVOR}-${FEDORA_VERSION}-${KERNEL_VERSION} AS akmods
-
 FROM scratch AS ctx
 
 COPY build_files /build
@@ -13,23 +7,13 @@ COPY cosign.pub /files/usr/share/pki/containers/zircadia.pub
 
 FROM "${BASE_IMAGE}"
 
-# Apply the narrowly pinned Fedora CA remediation before other network installs.
+# Verify inherited Fedora CA remediation (or the F44-only fallback) before network installs.
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=tmpfs,dst=/var \
     --mount=type=tmpfs,dst=/tmp \
     --mount=type=tmpfs,dst=/run \
     --mount=type=tmpfs,dst=/boot \
     /ctx/build/00-ca-certificates.sh
-
-# Install kernel
-# RUN --mount=type=cache,dst=/var/cache \
-#     --mount=type=cache,dst=/var/log \
-#     --mount=type=bind,from=akmods,src=/kernel-rpms,dst=/tmp/kernel-rpms \
-#     --mount=type=bind,from=akmods,src=/rpms/common,dst=/tmp/rpms/common \
-#     --mount=type=bind,from=akmods,src=/rpms/kmods,dst=/tmp/rpms/kmods \
-#     --mount=type=bind,from=ctx,source=/,target=/ctx \
-#     --mount=type=tmpfs,dst=/tmp \
-#    /ctx/build/00-kernel-install.sh
 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=tmpfs,dst=/var \

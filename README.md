@@ -90,9 +90,25 @@ Base images are pinned by digest in the [`Justfile`](./Justfile) and
 [`.github/workflows/build.yml`](./.github/workflows/build.yml); digest bumps are
 proposed by Renovate (see [`.github/renovate.json5`](./.github/renovate.json5)).
 
-## Temporary Fedora 44 CA remediation
+## Fedora 45 transition and CA remediation
 
-The first image-build step installs only the signed Fedora 44
+The pinned base is Fedora 45. Its inherited CA package must be at least
+`2026.2.92_v9.0.319-2.fc45`; older/missing bundles fail without downloading a
+Fedora 44 package. TLS and code-signing fingerprint checks remain mandatory.
+Unsupported Fedora releases fail closed. The disabled, unused Fedora 44 akmods
+stage was removed; this image continues to inherit its kernel from Zirconium.
+
+Terra's Fedora 45 vendor repo layout (`/usr/share/dnf5/repos.d`) and the older
+`/etc/yum.repos.d` layout are both handled at finalization, with disabled copies
+available to the installer dependency solver. Fedora's native `fdk-aac-free`
+package is used with matching x86_64/i686 versions, without a fixed versionlock
+or exclusion. It retains ordinary AAC support, but not FDK HE/HEv2 profiles.
+The full Terra codec can be reconsidered when a compatible F45 package becomes
+available; this is not an automatic switch or a claim of media feature parity.
+A container build does not validate boot, desktop, hardware or installer behavior.
+
+For deliberate Fedora 44 builds, the first image-build step retains the isolated
+fallback which installs only the signed Fedora 44
 `ca-certificates-2026.2.92_v9.0.319-2.fc44` package from
 [Koji build 3125414](https://koji.fedoraproject.org/koji/buildinfo?buildID=3125414).
 It pins the RPM's SHA-256, checks its signature against existing RPM keys, and
