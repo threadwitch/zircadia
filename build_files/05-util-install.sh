@@ -113,9 +113,9 @@ rm -f /tmp/sops.rpm
 # its GitHub release-asset SHA-256 pinned alongside the full release tag.
 # Renovate tracks the tag and archive checksum together.
 # renovate: datasource=github-release-attachments depName=jj-vcs/jj
-jj_version="v0.46.0"
+jj_version="v0.47.1"
 jj_url="https://github.com/jj-vcs/jj/releases/download/${jj_version}/jj-${jj_version}-x86_64-unknown-linux-musl.tar.gz"
-jj_sha256="fce0271158e665ceb82dc66c5eb95b1728649094e9133074f3b5baece345fc08"
+jj_sha256="d4b657f622ee50929c8916466dfa3d6a6c17a0a32b50e7b2c793707ec9ebcad7"
 jj_dir="$(mktemp -d)"
 trap 'rm -rf "${jj_dir}"' EXIT
 curl -fsSL "${jj_url}" -o "${jj_dir}/jj.tar.gz"
