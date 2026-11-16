@@ -5,7 +5,7 @@ filesystem := env("BUILD_FILESYSTEM", "ext4")
 # Base images are pinned by digest and kept current by Renovate (.github/renovate.json5).
 build:
     # renovate: datasource=docker depName=ghcr.io/zirconium-dev/zirconium
-    podman build --no-cache -t zircadia:latest --build-arg BASE_IMAGE=ghcr.io/zirconium-dev/zirconium:latest@sha256:9694ac282710ac50c5dde6010ff2fa160cf43f8b6e5ba9b6e3579d1bd6d3bd29 .
+    podman build --no-cache -t zircadia:latest --build-arg BASE_IMAGE=ghcr.io/zirconium-dev/zirconium:latest@sha256:f2544470aab1221c494f92a4a4d2103851293610f2af5555d6ba7fe66aaeb86e .
 
 iso $image=image:
     #!/usr/bin/env bash
